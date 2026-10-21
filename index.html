@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Монітор графіків ДТЕК</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
+    .container { max-width: 500px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; text-align: center; margin-bottom: 20px; }
+    .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #334155; }
+    .group-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 8px; color: #38bdf8; }
+    .status { font-size: 1.1rem; margin-bottom: 12px; }
+    .time-info { font-size: 0.85rem; color: #94a3b8; }
+    .btn { display: block; width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Графік відключень ДТЕК</h1>
+    
+    <div class="card">
+      <div class="group-title">Група 2.1</div>
+      <div id="status-21" class="status">Завантаження...</div>
+    </div>
+
+    <div class="card">
+      <div class="group-title">Група 2.2</div>
+      <div id="status-22" class="status">Завантаження...</div>
+    </div>
+
+    <div class="time-info" id="last-updated" style="text-align: center; margin-bottom: 16px;"></div>
+    
+    <button class="btn" onclick="loadSchedule()">Оновити дані</button>
+  </div>
+
+  <script>
+    async function loadSchedule() {
+      try {
+        // Додаємо timestamp щоб уникнути кешування браузером
+        const res = await fetch('data.json?t=' + Date.now());
+        if (!res.ok) throw new Error('Файл даних ще не створено');
+        
+        const data = await res.json();
+        
+        document.getElementById('status-21').innerText = data['2.1'] || 'Дані відсутні';
+        document.getElementById('status-22').innerText = data['2.2'] || 'Дані відсутні';
+        document.getElementById('last-updated').innerText = 'Останнє оновлення: ' + (data.updated_at || 'невідомо');
+      } catch (err) {
+        document.getElementById('status-21').innerText = 'Помилка завантаження даних';
+        document.getElementById('status-22').innerText = 'Помилка завантаження даних';
+        document.getElementById('last-updated').innerText = err.message;
+      }
+    }
+
+    // Автоматичне оновлення кожні 5 хвилин
+    loadSchedule();
+    setInterval(loadSchedule, 300000);
+  </script>
+</body>
+</html>
