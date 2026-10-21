@@ -3,14 +3,17 @@ import datetime
 import cloudscraper
 from bs4 import BeautifulSoup
 
-def get_schedule_for_address(street_name, house_num="1"):
+def get_hours_status_for_address(street_name, house_num="1"):
+    # Типовий масив з 24 годин: 'yes' (є світло), 'no' (немає), 'maybe_first', 'maybe_second'
+    hours_data = ["yes"] * 24
+    
     try:
         scraper = cloudscraper.create_scraper()
         url = "https://www.dtek-krem.com.ua/ua/ajax"
         
         headers = {
             'X-Requested-With': 'XMLHttpRequest',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
 
         payload = {
@@ -30,26 +33,46 @@ def get_schedule_for_address(street_name, house_num="1"):
             
             if html_content:
                 soup = BeautifulSoup(html_content, "html.parser")
-                text = soup.get_text()
-                if "Світла немає" in text:
-                    return "Відключення за графіком"
-                return "Світло є (за розкладом)"
-            return "Дані отримано"
-        return f"Помилка ДТЕК ({response.status_code})"
+                
+                # Знаходимо всі клітинки таблиці годин
+                # ДТЕК використовує атрибути data-hour або класи no/yes/maybe
+                rows = soup.find_all("tr")
+                for row in rows:
+                    cells = row.find_all(["td", "th"])
+                    for cell in cells:
+                        hour_attr = cell.get("data-hour")
+                        if hour_attr is not None:
+                            try:
+                                h = int(hour_attr)
+                                classes = cell.get("class", [])
+                                class_str = " ".join(classes) if isinstance(classes, list) else str(classes)
+                                
+                                if "no" in class_str or "off" in class_str:
+                                    hours_data[h] = "no"
+                                elif "maybe" in class_str or "first" in class_str:
+                                    hours_data[h] = "maybe_first"
+                                elif "second" in class_str:
+                                    hours_data[h] = "maybe_second"
+                                else:
+                                    hours_data[h] = "yes"
+                            except ValueError:
+                                pass
     except Exception as e:
-        return f"Тимчасова помилка: {str(e)}"
+        print(f"Помилка при зборі {street_name}: {e}")
+
+    return hours_data
 
 def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
     
-    status_21 = get_schedule_for_address("шосе Сквирське", "1")
-    status_22 = get_schedule_for_address("вул. Кожедуба Івана", "1")
+    hours_21 = get_hours_status_for_address("шосе Сквирське", "1")
+    hours_22 = get_hours_status_for_address("вул. Кожедуба Івана", "1")
 
     result = {
         "updated_at": now.strftime("%d.%m.%Y %H:%M"),
-        "2.1": status_21,
-        "2.2": status_22
+        "2.1": hours_21,
+        "2.2": hours_22
     }
 
     with open("data.json", "w", encoding="utf-8") as f:
