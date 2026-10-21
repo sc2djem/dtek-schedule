@@ -3,52 +3,60 @@ import datetime
 import cloudscraper
 from bs4 import BeautifulSoup
 
-def parse_dtek_exact_html(html_content):
-    hours_status = ["yes"] * 24
-    if not html_content:
-        return hours_status
+def parse_html_table(html_str):
+    # За замовчуванням 24 години "yes"
+    hours = ["yes"] * 24
+    if not html_str:
+        return hours
 
-    try:
-        soup = BeautifulSoup(html_content, "html.parser")
+    soup = BeautifulSoup(html_str, "html.parser")
+
+    # 1. Пошук за точними класи ДТЕК з вашого скріншота DevTools
+    rows = soup.find_all("tr")
+    for row in rows:
+        cells = row.find_all("td")
+        status_cells = [c for c in cells if any(k in " ".join(c.get("class", [])) for k in ["cell-scheduled", "cell-non-scheduled", "cell-first-half", "cell-second-half"])]
         
-        # Шукаємо активну таблицю з графіком
-        active_table = soup.find("div", class_=lambda c: c and "discon-fact-table" in c and "active" in c)
-        if not active_table:
-            active_table = soup
+        if len(status_cells) >= 24:
+            for i in range(24):
+                cls = " ".join(status_cells[i].get("class", []))
+                if "cell-scheduled" in cls:
+                    hours[i] = "no"
+                elif "cell-first-half" in cls:
+                    hours[i] = "maybe_first"
+                elif "cell-second-half" in cls:
+                    hours[i] = "maybe_second"
+                elif "cell-non-scheduled" in cls:
+                    hours[i] = "yes"
+            return hours
 
-        # Знаходимо всі клітинки рядка з годинами
-        rows = active_table.find_all("tr")
-        for row in rows:
-            cells = row.find_all("td")
-            
-            # Фільтруємо лише клітинки, які мають класи стану (cell-scheduled, cell-non-scheduled тощо)
-            status_cells = [c for c in cells if any(k in " ".join(c.get("class", [])) for k in ["cell-scheduled", "cell-non-scheduled", "cell-first-half", "cell-second-half"])]
-            
-            if len(status_cells) >= 24:
-                for i in range(24):
-                    cls = " ".join(status_cells[i].get("class", []))
-                    
-                    if "cell-scheduled" in cls:
-                        hours_status[i] = "no"
-                    elif "cell-first-half" in cls:
-                        hours_status[i] = "maybe_first"
-                    elif "cell-second-half" in cls:
-                        hours_status[i] = "maybe_second"
-                    elif "cell-non-scheduled" in cls:
-                        hours_status[i] = "yes"
-                return hours_status
-    except Exception as e:
-        print(f"Помилка разбору DOM: {e}")
+    # 2. Альтернативний пошук за атрибутом data-hour
+    data_cells = soup.find_all(attrs={"data-hour": True})
+    if data_cells:
+        for cell in data_cells:
+            try:
+                h = int(cell["data-hour"])
+                if 0 <= h < 24:
+                    cls = " ".join(cell.get("class", []))
+                    if "no" in cls or "off" in cls or "scheduled" in cls:
+                        hours[h] = "no"
+                    elif "first" in cls:
+                        hours[h] = "maybe_first"
+                    elif "second" in cls:
+                        hours[h] = "maybe_second"
+            except (ValueError, KeyError):
+                pass
+        return hours
 
-    return hours_status
+    return hours
 
-def get_schedule(street_name):
+def get_dtek_schedule(street_name, house_num="1"):
     scraper = cloudscraper.create_scraper()
     url = "https://www.dtek-krem.com.ua/ua/ajax"
     
     headers = {
         'X-Requested-With': 'XMLHttpRequest',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
 
     payload = {
@@ -58,17 +66,20 @@ def get_schedule(street_name):
         'data[1][name]': 'street',
         'data[1][value]': street_name,
         'data[2][name]': 'house',
-        'data[2][value]': '1'
+        'data[2][value]': house_num
     }
 
     try:
-        res = scraper.post(url, headers=headers, data=payload, timeout=12)
+        res = scraper.post(url, headers=headers, data=payload, timeout=15)
         if res.status_code == 200:
             data = res.json()
             html_content = ""
+            
             if isinstance(data, dict):
-                html_content = data.get("html", "") or data.get("data", "")
-            return parse_dtek_exact_html(html_content)
+                # Збираємо весь HTML, який прийшов від ДТЕК
+                html_content = data.get("html", "") or data.get("data", "") or str(data.get("subscribes", ""))
+                
+            return parse_html_table(html_content)
     except Exception as e:
         print(f"Помилка запиту ({street_name}): {e}")
 
@@ -78,8 +89,9 @@ def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
     
-    hours_21 = get_schedule("шосе Сквирське")
-    hours_22 = get_schedule("вул. Кожедуба Івана")
+    # Викликаємо парсинг для обох вулиць у м. Біла Церква
+    hours_21 = get_dtek_schedule("шосе Сквирське", "1")
+    hours_22 = get_dtek_schedule("вул. Кожедуба Івана", "1")
 
     result = {
         "updated_at": now.strftime("%d.%m.%Y %H:%M"),
