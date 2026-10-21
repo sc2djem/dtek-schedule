@@ -2,10 +2,11 @@ name: Update DTEK Schedule
 
 on:
   schedule:
-    # Запуск щогодини (на 0-й хвилині)
     - cron: '0 * * * *'
-  # Дозволяє запускати вручну з вкладки Actions
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -13,10 +14,10 @@ jobs:
 
     steps:
     - name: Перевірка коду
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Налаштування Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
