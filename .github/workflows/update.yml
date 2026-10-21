@@ -1,0 +1,36 @@
+name: Update DTEK Schedule
+
+on:
+  schedule:
+    # Запуск щогодини (на 0-й хвилині)
+    - cron: '0 * * * *'
+  # Дозволяє запускати вручну з вкладки Actions
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Перевірка коду
+      uses: actions/checkout@v3
+
+    - name: Налаштування Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Встановлення залежностей
+      run: |
+        python -m pip install --upgrade pip
+        pip install cloudscraper requests
+
+    - name: Запуск парсера
+      run: python scraper.py
+
+    - name: Комміт та пуш оновлених даних
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add data.json
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Оновлено графік [skip ci]" && git push)
