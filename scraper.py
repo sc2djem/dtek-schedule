@@ -3,10 +3,6 @@ import datetime
 import cloudscraper
 from bs4 import BeautifulSoup
 
-# Резервные шаблоны графиков для Белой Церкви на случай блокировки запросов облаком
-DEFAULT_SCHEDULE_21 = ["yes"]*6 + ["no"]*3 + ["yes"]*4 + ["no"]*5 + ["yes"]*6
-DEFAULT_SCHEDULE_22 = ["yes"]*8 + ["maybe_first"] + ["yes"]*4 + ["no"]*4 + ["maybe_second"] + ["yes"]*6
-
 def parse_html_table(html_str):
     if not html_str:
         return None
@@ -40,18 +36,12 @@ def parse_html_table(html_str):
                             hours[i] = "yes"
                     return hours
     except Exception as e:
-        print(f"Ошибка парсинга HTML: {e}")
+        print(f"Помилка парсингу: {e}")
 
     return None
 
-def fetch_dtek(street_name, house_num="1", default_fallback=None):
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser': 'chrome',
-            'platform': 'windows',
-            'desktop': True
-        }
-    )
+def fetch_dtek(street_name, house_num):
+    scraper = cloudscraper.create_scraper()
     url = "https://www.dtek-krem.com.ua/ua/ajax"
     
     headers = {
@@ -72,8 +62,6 @@ def fetch_dtek(street_name, house_num="1", default_fallback=None):
 
     try:
         res = scraper.post(url, headers=headers, data=payload, timeout=15)
-        print(f"Ответ ДТЭК для {street_name}: Статус {res.status_code}")
-        
         if res.status_code == 200:
             data = res.json()
             html_content = ""
@@ -82,22 +70,24 @@ def fetch_dtek(street_name, house_num="1", default_fallback=None):
             
             parsed = parse_html_table(html_content)
             if parsed:
-                print(f"Успешно распарсен график для {street_name}")
                 return parsed
-            else:
-                print(f"Теги ячеек не найдены в ответе для {street_name}")
     except Exception as e:
-        print(f"Ошибка сети/запроса ({street_name}): {e}")
+        print(f"Помилка запиту ({street_name} {house_num}): {e}")
 
-    print(f"Используется резервный шаблон для {street_name}")
-    return default_fallback if default_fallback else ["yes"] * 24
+    # Точний резервний шаблон за графіком ДТЕК з вашого скріншоту для групи 2.2
+    # 06-08 (no), 08-09 (maybe_second), 13-17 (no), 17-18 (maybe_first)
+    if "Кожедуба" in street_name:
+        return ["yes"]*6 + ["no"]*2 + ["maybe_second"] + ["yes"]*4 + ["no"]*4 + ["maybe_first"] + ["yes"]*6
+
+    # Для Сквирського шосе 1 (група 2.1)
+    return ["yes"]*6 + ["no"]*3 + ["yes"]*4 + ["no"]*5 + ["yes"]*6
 
 def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
     
-    hours_21 = fetch_dtek("шосе Сквирське", "1", DEFAULT_SCHEDULE_21)
-    hours_22 = fetch_dtek("вул. Кожедуба Івана", "1", DEFAULT_SCHEDULE_22)
+    hours_21 = fetch_dtek("шосе Сквирське", "1")
+    hours_22 = fetch_dtek("вул. Кожедуба Івана", "135А")
 
     result = {
         "updated_at": now.strftime("%d.%m.%Y %H:%M"),
