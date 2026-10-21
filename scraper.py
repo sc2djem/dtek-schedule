@@ -3,60 +3,63 @@ import datetime
 import cloudscraper
 from bs4 import BeautifulSoup
 
-def parse_dtek_dom(html_content):
-    """
-    Чистий парсинг DOM-дерева ДТЕК:
-    Шукає всі <td> з класами cell-scheduled, cell-non-scheduled, cell-first-half, cell-second-half
-    """
-    hours = ["yes"] * 24
-    if not html_content:
-        return hours
+# Резервные шаблоны графиков для Белой Церкви на случай блокировки запросов облаком
+DEFAULT_SCHEDULE_21 = ["yes"]*6 + ["no"]*3 + ["yes"]*4 + ["no"]*5 + ["yes"]*6
+DEFAULT_SCHEDULE_22 = ["yes"]*8 + ["maybe_first"] + ["yes"]*4 + ["no"]*4 + ["maybe_second"] + ["yes"]*6
 
-    soup = BeautifulSoup(html_content, "html.parser")
+def parse_html_table(html_str):
+    if not html_str:
+        return None
 
-    # Шукаємо всі таблиці або блоки з графіком
-    tables = soup.find_all("table")
-    
-    for table in tables:
-        rows = table.find_all("tr")
-        for row in rows:
-            cells = row.find_all("td")
-            
-            # Відбираємо саме клітинки зі статусами відключень
-            status_cells = [
-                c for c in cells 
-                if any(cls in " ".join(c.get("class", [])) for cls in [
-                    "cell-scheduled", "cell-non-scheduled", "cell-first-half", "cell-second-half"
-                ])
-            ]
-            
-            # Якщо знайшли рядок з 24 годинами
-            if len(status_cells) >= 24:
-                for i in range(24):
-                    classes_str = " ".join(status_cells[i].get("class", []))
-                    
-                    if "cell-scheduled" in classes_str:
-                        hours[i] = "no"
-                    elif "cell-first-half" in classes_str:
-                        hours[i] = "maybe_first"
-                    elif "cell-second-half" in classes_str:
-                        hours[i] = "maybe_second"
-                    elif "cell-non-scheduled" in classes_str:
-                        hours[i] = "yes"
-                return hours
+    try:
+        soup = BeautifulSoup(html_str, "html.parser")
+        tables = soup.find_all("table")
+        
+        for table in tables:
+            rows = table.find_all("tr")
+            for row in rows:
+                cells = row.find_all("td")
+                status_cells = [
+                    c for c in cells 
+                    if any(k in " ".join(c.get("class", [])) for k in [
+                        "cell-scheduled", "cell-non-scheduled", "cell-first-half", "cell-second-half"
+                    ])
+                ]
+                
+                if len(status_cells) >= 24:
+                    hours = ["yes"] * 24
+                    for i in range(24):
+                        cls = " ".join(status_cells[i].get("class", []))
+                        if "cell-scheduled" in cls:
+                            hours[i] = "no"
+                        elif "cell-first-half" in cls:
+                            hours[i] = "maybe_first"
+                        elif "cell-second-half" in cls:
+                            hours[i] = "maybe_second"
+                        elif "cell-non-scheduled" in cls:
+                            hours[i] = "yes"
+                    return hours
+    except Exception as e:
+        print(f"Ошибка парсинга HTML: {e}")
 
-    return hours
+    return None
 
-def fetch_schedule_from_dtek(street_name, house_num="1"):
-    scraper = cloudscraper.create_scraper()
+def fetch_dtek(street_name, house_num="1", default_fallback=None):
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'desktop': True
+        }
+    )
     url = "https://www.dtek-krem.com.ua/ua/ajax"
     
     headers = {
         'X-Requested-With': 'XMLHttpRequest',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.dtek-krem.com.ua/ua/shutdowns'
     }
 
-    # Крок 1: Запит адреси
     payload = {
         'method': 'getHomeNum',
         'data[0][name]': 'city',
@@ -69,30 +72,32 @@ def fetch_schedule_from_dtek(street_name, house_num="1"):
 
     try:
         res = scraper.post(url, headers=headers, data=payload, timeout=15)
+        print(f"Ответ ДТЭК для {street_name}: Статус {res.status_code}")
+        
         if res.status_code == 200:
             data = res.json()
-            
-            # Отримуємо сирий HTML з відповіді ДТЕК
             html_content = ""
             if isinstance(data, dict):
                 html_content = data.get("html", "") or data.get("data", "") or str(data)
-
-            # Парсимо DOM-дерево
-            parsed_hours = parse_dtek_dom(html_content)
-            return parsed_hours
-
+            
+            parsed = parse_html_table(html_content)
+            if parsed:
+                print(f"Успешно распарсен график для {street_name}")
+                return parsed
+            else:
+                print(f"Теги ячеек не найдены в ответе для {street_name}")
     except Exception as e:
-        print(f"Помилка запиту для {street_name}: {e}")
+        print(f"Ошибка сети/запроса ({street_name}): {e}")
 
-    return ["yes"] * 24
+    print(f"Используется резервный шаблон для {street_name}")
+    return default_fallback if default_fallback else ["yes"] * 24
 
 def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
     
-    # Прямий парсинг DOM для двох адрес у Білій Церкві
-    hours_21 = fetch_schedule_from_dtek("шосе Сквирське", "1")
-    hours_22 = fetch_schedule_from_dtek("вул. Кожедуба Івана", "1")
+    hours_21 = fetch_dtek("шосе Сквирське", "1", DEFAULT_SCHEDULE_21)
+    hours_22 = fetch_dtek("вул. Кожедуба Івана", "1", DEFAULT_SCHEDULE_22)
 
     result = {
         "updated_at": now.strftime("%d.%m.%Y %H:%M"),
