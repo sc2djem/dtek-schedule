@@ -3,10 +3,54 @@ import datetime
 import cloudscraper
 from bs4 import BeautifulSoup
 
-def get_hours_status_for_address(street_name, house_num="1"):
-    # Типовий масив з 24 годин: 'yes' (є світло), 'no' (немає), 'maybe_first', 'maybe_second'
-    hours_data = ["yes"] * 24
+def parse_dtek_html(html_content):
+    # Початковий масив на 24 години: 'yes', 'no', 'maybe_first', 'maybe_second'
+    hours_status = ["yes"] * 24
+    if not html_content:
+        return hours_status
+
+    soup = BeautifulSoup(html_content, "html.parser")
     
+    # Шукаємо всі елементи/клітинки, що відповідають годинам
+    # ДТЕК використовує атрибути data-hour (0..23) або класи в таблицях
+    cells = soup.find_all(attrs={"data-hour": True})
+    
+    if cells:
+        for cell in cells:
+            try:
+                h = int(cell["data-hour"])
+                if 0 <= h < 24:
+                    classes = cell.get("class", [])
+                    class_str = " ".join(classes) if isinstance(classes, list) else str(classes)
+                    
+                    if "no" in class_str or "off" in class_str:
+                        hours_status[h] = "no"
+                    elif "maybe-first" in class_str or "first" in class_str:
+                        hours_status[h] = "maybe_first"
+                    elif "maybe-second" in class_str or "second" in class_str:
+                        hours_status[h] = "maybe_second"
+                    elif "maybe" in class_str:
+                        hours_status[h] = "maybe_first"
+            except (ValueError, KeyError):
+                pass
+    else:
+        # Якщо data-hour відсутній, шукаємо по тегах td/div з відповідними класами
+        all_cells = soup.find_all(["td", "div"], class_=True)
+        hour_counter = 0
+        for cell in all_cells:
+            classes = cell.get("class", [])
+            class_str = " ".join(classes) if isinstance(classes, list) else str(classes)
+            if any(k in class_str for k in ["cell", "hour", "schedule-cell"]):
+                if hour_counter < 24:
+                    if "no" in class_str:
+                        hours_status[hour_counter] = "no"
+                    elif "maybe" in class_str:
+                        hours_status[hour_counter] = "maybe_first"
+                    hour_counter += 1
+
+    return hours_status
+
+def get_hours_for_address(street_name, house_num="1"):
     try:
         scraper = cloudscraper.create_scraper()
         url = "https://www.dtek-krem.com.ua/ua/ajax"
@@ -30,44 +74,18 @@ def get_hours_status_for_address(street_name, house_num="1"):
         if response.status_code == 200:
             data = response.json()
             html_content = data.get("html", "") or data.get("data", "")
-            
-            if html_content:
-                soup = BeautifulSoup(html_content, "html.parser")
-                
-                # Знаходимо всі клітинки таблиці годин
-                # ДТЕК використовує атрибути data-hour або класи no/yes/maybe
-                rows = soup.find_all("tr")
-                for row in rows:
-                    cells = row.find_all(["td", "th"])
-                    for cell in cells:
-                        hour_attr = cell.get("data-hour")
-                        if hour_attr is not None:
-                            try:
-                                h = int(hour_attr)
-                                classes = cell.get("class", [])
-                                class_str = " ".join(classes) if isinstance(classes, list) else str(classes)
-                                
-                                if "no" in class_str or "off" in class_str:
-                                    hours_data[h] = "no"
-                                elif "maybe" in class_str or "first" in class_str:
-                                    hours_data[h] = "maybe_first"
-                                elif "second" in class_str:
-                                    hours_data[h] = "maybe_second"
-                                else:
-                                    hours_data[h] = "yes"
-                            except ValueError:
-                                pass
+            return parse_dtek_html(html_content)
     except Exception as e:
-        print(f"Помилка при зборі {street_name}: {e}")
+        print(f"Error fetching {street_name}: {e}")
 
-    return hours_data
+    return ["yes"] * 24
 
 def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
     
-    hours_21 = get_hours_status_for_address("шосе Сквирське", "1")
-    hours_22 = get_hours_status_for_address("вул. Кожедуба Івана", "1")
+    hours_21 = get_hours_for_address("шосе Сквирське", "1")
+    hours_22 = get_hours_for_address("вул. Кожедуба Івана", "1")
 
     result = {
         "updated_at": now.strftime("%d.%m.%Y %H:%M"),
