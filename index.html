@@ -2,60 +2,136 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
+  <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Монітор графіків ДТЕК</title>
+  <title>Графік ДТЕК — Біла Церква</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
-    .container { max-width: 500px; margin: 0 auto; }
-    h1 { font-size: 1.5rem; text-align: center; margin-bottom: 20px; }
-    .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #334155; }
-    .group-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 8px; color: #38bdf8; }
-    .status { font-size: 1.1rem; margin-bottom: 12px; }
-    .time-info { font-size: 0.85rem; color: #94a3b8; }
-    .btn { display: block; width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 15px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { text-align: center; font-size: 1.4rem; margin-bottom: 20px; color: #f8fafc; }
+    
+    .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+    .group-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; }
+    
+    /* Контейнер таблиці з прокруткою на мобільних */
+    .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #475569; }
+    
+    table { width: 100%; border-collapse: collapse; text-align: center; background: #0f172a; min-width: 700px; }
+    th, td { border: 1px solid #334155; padding: 6px 4px; font-size: 0.75rem; }
+    th { background: #1e293b; color: #94a3b8; font-weight: 500; min-width: 28px; }
+    
+    .header-col { background: #1e293b; color: #38bdf8; font-weight: bold; width: 90px; text-align: left; padding-left: 8px; }
+    
+    /* Стилі клітинок стану */
+    .cell-yes { background: #0f172a; color: #10b981; }
+    .cell-no { background: #cbd5e1; color: #1e293b; font-weight: bold; }
+    .cell-maybe_first { background: #cbd5e1; color: #d97706; font-weight: bold; }
+    .cell-maybe_second { background: #cbd5e1; color: #d97706; font-weight: bold; }
+    
+    /* Позначка поточної години */
+    .current-hour { outline: 2px solid #38bdf8; outline-offset: -2px; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 15px; font-size: 0.8rem; color: #94a3b8; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-box { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #475569; }
+    
+    .btn { display: block; width: 100%; max-width: 300px; margin: 20px auto 0; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
+    .updated-text { text-align: center; font-size: 0.8rem; color: #64748b; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Графік відключень ДТЕК</h1>
-    
+    <h1>Графіки відключень ДТЕК (м. Біла Церква)</h1>
+
+    <!-- Картка Група 2.1 -->
     <div class="card">
-      <div class="group-title">Група 2.1</div>
-      <div id="status-21" class="status">Завантаження...</div>
+      <div class="group-title">
+        <span>Група 2.1 (шосе Сквирське)</span>
+      </div>
+      <div class="table-wrapper">
+        <table id="table-21"></table>
+      </div>
     </div>
 
+    <!-- Картка Група 2.2 -->
     <div class="card">
-      <div class="group-title">Група 2.2</div>
-      <div id="status-22" class="status">Завантаження...</div>
+      <div class="group-title">
+        <span>Група 2.2 (вул. Кожедуба Івана)</span>
+      </div>
+      <div class="table-wrapper">
+        <table id="table-22"></table>
+      </div>
     </div>
 
-    <div class="time-info" id="last-updated" style="text-align: center; margin-bottom: 16px;"></div>
-    
-    <button class="btn" onclick="loadSchedule()">Оновити дані</button>
+    <!-- Легенда -->
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background:#0f172a;"></div> Світло є</div>
+      <div class="legend-item"><div class="legend-box" style="background:#cbd5e1; color:#1e293b; text-align:center;">⚡</div> Світла немає</div>
+      <div class="legend-item"><div class="legend-box" style="background:#cbd5e1; color:#d97706; text-align:center;">⚡</div> Можливе відключення</div>
+    </div>
+
+    <div class="updated-text" id="last-updated">Завантаження...</div>
+    <button class="btn" onclick="loadSchedule()">Оновити сторінку</button>
   </div>
 
   <script>
+    const HOURS = ['00-01','01-02','02-03','03-04','04-05','05-06','06-07','07-08','08-09','09-10','10-11','11-12','12-13','13-14','14-15','15-16','16-17','17-18','18-19','19-20','20-21','21-22','22-23','23-24'];
+
+    function renderTable(tableId, hoursData) {
+      const table = document.getElementById(tableId);
+      const currentHour = new Date().getHours();
+      
+      let headerHtml = '<tr><th class="header-col">Часові проміжки</th>';
+      HOURS.forEach((h, idx) => {
+        const isCurrent = idx === currentHour ? 'current-hour' : '';
+        headerHtml += `<th class="${isCurrent}">${h.replace('-','<br>')}</th>`;
+      });
+      headerHtml += '</tr>';
+
+      let rowHtml = '<tr><td class="header-col">Стан</td>';
+      for (let i = 0; i < 24; i++) {
+        const status = (hoursData && hoursData[i]) ? hoursData[i] : 'yes';
+        const isCurrent = i === currentHour ? 'current-hour' : '';
+        
+        let cellContent = '';
+        let cellClass = 'cell-yes';
+
+        if (status === 'no') {
+          cellClass = 'cell-no';
+          cellContent = '⚡';
+        } else if (status === 'maybe_first' || status === 'maybe_second') {
+          cellClass = 'cell-maybe_first';
+          cellContent = '⚡';
+        }
+
+        rowHtml += `<td class="${cellClass} ${isCurrent}">${cellContent}</td>`;
+      }
+      rowHtml += '</tr>';
+
+      table.innerHTML = headerHtml + rowHtml;
+    }
+
     async function loadSchedule() {
       try {
-        // Додаємо timestamp щоб уникнути кешування браузером
         const res = await fetch('data.json?t=' + Date.now());
-        if (!res.ok) throw new Error('Файл даних ще не створено');
+        if (!res.ok) throw new Error('Дані оновлюються');
         
         const data = await res.json();
         
-        document.getElementById('status-21').innerText = data['2.1'] || 'Дані відсутні';
-        document.getElementById('status-22').innerText = data['2.2'] || 'Дані відсутні';
-        document.getElementById('last-updated').innerText = 'Останнє оновлення: ' + (data.updated_at || 'невідомо');
+        renderTable('table-21', data['2.1']);
+        renderTable('table-22', data['2.2']);
+        
+        document.getElementById('last-updated').innerText = 'Дата та час останнього оновлення: ' + (data.updated_at || 'невідомо');
       } catch (err) {
-        document.getElementById('status-21').innerText = 'Помилка завантаження даних';
-        document.getElementById('status-22').innerText = 'Помилка завантаження даних';
+        // Якщо файлу ще немає, малюємо заповнені таблиці за замовчуванням
+        renderTable('table-21', Array(24).fill('yes'));
+        renderTable('table-22', Array(24).fill('yes'));
         document.getElementById('last-updated').innerText = err.message;
       }
     }
 
-    // Автоматичне оновлення кожні 5 хвилин
     loadSchedule();
-    setInterval(loadSchedule, 300000);
   </script>
 </body>
 </html>
