@@ -10,24 +10,24 @@
     body { font-family: system-ui, -apple-system, sans-serif; background: #0b1329; color: #ffffff; margin: 0; padding: 15px; }
     .container { max-width: 1050px; margin: 0 auto; }
     h1 { text-align: center; font-size: 1.5rem; margin-bottom: 25px; }
-    
+
     .card { background: #131e3a; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #23335a; }
     .group-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #38bdf8; }
-    
+
     .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; background: #ffffff; padding: 2px; }
-    
+
     table { width: 100%; border-collapse: collapse; text-align: center; color: #1e293b; min-width: 850px; background: #ffffff; }
     th, td { border: 1px solid #cbd5e1; padding: 0; height: 44px; font-size: 0.8rem; position: relative; }
-    
+
     th { background: #ffffff; color: #1e3a8a; font-weight: bold; height: 65px; vertical-align: middle; }
     .header-col { background: #ffffff; color: #1e3a8a; font-weight: bold; width: 100px; text-align: left; padding-left: 10px; }
-    
+
     .time-text { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block; white-space: nowrap; font-size: 0.75rem; letter-spacing: 1px; }
 
     /* Повне відключення (1 година) */
     .cell-no { background: #d1d5db; }
 
-    /* Повторення стилю ДТЕК для півгодинних відключень */
+    /* Півгодинні відключення */
     .cell-maybe_first {
       background: linear-gradient(90deg, #d1d5db 50%, #ffffff 50%);
     }
@@ -35,29 +35,37 @@
       background: linear-gradient(90deg, #ffffff 50%, #d1d5db 50%);
     }
 
-    /* SVG-іконки перекресленої блискавки ДТЕК */
+    /* Даних немає */
+    .cell-unknown { background: #fef3c7; color: #92400e; font-weight: bold; font-size: 1rem; }
+
+    /* SVG-іконки перекресленої блискавки */
     .icon-wrap { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; position: relative; }
     .icon-wrap svg { width: 18px; height: 18px; fill: #1e293b; }
-    
-    /* Розміщення блискавки в лівій або правій половині */
+
     .cell-maybe_first .icon-wrap svg { margin-right: 50%; }
     .cell-maybe_second .icon-wrap svg { margin-left: 50%; }
 
-    /* Активна поточна година */
+    /* Поточна година */
     .current-hour-col { outline: 2px solid #0284c7; outline-offset: -2px; z-index: 2; }
 
-    /* Легенда у точності як на сайті ДТЕК */
+    /* Легенда */
     .legend { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; font-size: 0.85rem; color: #94a3b8; }
     .legend-item { display: flex; align-items: center; gap: 8px; }
     .legend-box { width: 22px; height: 22px; border-radius: 4px; border: 1px solid #cbd5e1; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
     .btn { display: block; width: 100%; max-width: 320px; margin: 25px auto 0; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
     .updated-text { text-align: center; font-size: 0.85rem; color: #94a3b8; margin-top: 15px; }
+
+    /* Повідомлення про помилку оновлення */
+    .error-banner { display: none; background: #7f1d1d; border: 1px solid #ef4444; color: #fee2e2; border-radius: 10px; padding: 12px 15px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4; }
+    .error-banner.visible { display: block; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Графіки відключень ДТЕК (м. Біла Церква)</h1>
+
+    <div class="error-banner" id="error-banner"></div>
 
     <div class="card">
       <div class="group-title">Група 2.1 (шосе Сквирське)</div>
@@ -73,7 +81,7 @@
       </div>
     </div>
 
-    <!-- Легенда ДТЕК -->
+    <!-- Легенда -->
     <div class="legend">
       <div class="legend-item"><div class="legend-box"></div> Світло є</div>
       <div class="legend-item">
@@ -91,6 +99,9 @@
           <svg viewBox="0 0 24 24" width="12" height="12" style="margin-left:50%;"><path fill="#1e293b" d="M11 15H6l7-14v8h5l-7 14v-8z"/></svg>
         </div> Світла не буде другі 30 хв.
       </div>
+      <div class="legend-item">
+        <div class="legend-box cell-unknown" style="font-size:0.8rem;">?</div> Даних немає
+      </div>
     </div>
 
     <div class="updated-text" id="last-updated">Завантаження...</div>
@@ -105,7 +116,8 @@
     function renderTable(tableId, hoursData) {
       const table = document.getElementById(tableId);
       const currentHour = new Date().getHours();
-      
+      const hasData = Array.isArray(hoursData) && hoursData.length === 24;
+
       let headerHtml = '<tr><th class="header-col">Часові<br>проміжки</th>';
       HOURS.forEach((h, idx) => {
         const isCurrent = idx === currentHour ? 'current-hour-col' : '';
@@ -115,21 +127,26 @@
 
       let rowHtml = '<tr><td class="header-col">Стан</td>';
       for (let i = 0; i < 24; i++) {
-        const status = (hoursData && hoursData[i]) ? hoursData[i] : 'yes';
         const isCurrent = i === currentHour ? 'current-hour-col' : '';
-        
+
         let cellContent = '';
         let cellClass = 'cell-yes';
 
-        if (status === 'no') {
-          cellClass = 'cell-no';
-          cellContent = SVG_OFF;
-        } else if (status === 'maybe_first') {
-          cellClass = 'cell-maybe_first';
-          cellContent = SVG_OFF;
-        } else if (status === 'maybe_second') {
-          cellClass = 'cell-maybe_second';
-          cellContent = SVG_OFF;
+        if (!hasData) {
+          cellClass = 'cell-unknown';
+          cellContent = '?';
+        } else {
+          const status = hoursData[i] || 'yes';
+          if (status === 'no') {
+            cellClass = 'cell-no';
+            cellContent = SVG_OFF;
+          } else if (status === 'maybe_first') {
+            cellClass = 'cell-maybe_first';
+            cellContent = SVG_OFF;
+          } else if (status === 'maybe_second') {
+            cellClass = 'cell-maybe_second';
+            cellContent = SVG_OFF;
+          }
         }
 
         rowHtml += `<td class="${cellClass} ${isCurrent}">${cellContent}</td>`;
@@ -140,18 +157,35 @@
     }
 
     async function loadSchedule() {
+      const banner = document.getElementById('error-banner');
+      const lastUpdated = document.getElementById('last-updated');
       try {
-        const res = await fetch('data.json?t=' + Date.now());
-        if (!res.ok) throw new Error('Дані оновлюються');
-        
+        const res = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('Не вдалося завантажити data.json (код ' + res.status + ')');
+
         const data = await res.json();
-        
+
         renderTable('table-21', data['2.1']);
         renderTable('table-22', data['2.2']);
-        
-        document.getElementById('last-updated').innerText = 'Дата та час останнього оновлення: ' + (data.updated_at || 'невідомо');
+
+        lastUpdated.innerText = 'Дата та час останнього оновлення: ' + (data.updated_at || 'невідомо');
+
+        if (data.status === 'error') {
+          let msg = '⚠ Не вдалося оновити дані з сайту ДТЕК';
+          if (data.checked_at) msg += ' (остання спроба: ' + data.checked_at + ')';
+          msg += '. Показано останній відомий графік.';
+          if (data.error) msg += ' Причина: ' + data.error;
+          banner.innerText = msg;
+          banner.classList.add('visible');
+        } else {
+          banner.classList.remove('visible');
+        }
       } catch (err) {
-        document.getElementById('last-updated').innerText = err.message;
+        renderTable('table-21', null);
+        renderTable('table-22', null);
+        banner.innerText = '⚠ ' + err.message;
+        banner.classList.add('visible');
+        lastUpdated.innerText = '';
       }
     }
 
