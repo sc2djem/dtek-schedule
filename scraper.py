@@ -56,24 +56,18 @@ def parse_html_table(html_str):
                             hours[i] = "yes"
                     return hours
     except Exception as e:
-        print(f"Помилка парсингу HTML: {e}")
+        print(f"Помилка парсингу: {e}")
 
     return None
 
-def fetch_dtek(street_name, house_num):
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser': 'chrome',
-            'platform': 'windows',
-            'desktop': True
-        }
-    )
+def fetch_dtek(scraper, street_name, house_num):
     url = "https://www.dtek-krem.com.ua/ua/ajax"
     
     headers = {
         'X-Requested-With': 'XMLHttpRequest',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://www.dtek-krem.com.ua/ua/shutdowns'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': 'https://www.dtek-krem.com.ua/ua/shutdowns',
+        'Origin': 'https://www.dtek-krem.com.ua'
     }
 
     payload = {
@@ -87,7 +81,7 @@ def fetch_dtek(street_name, house_num):
     }
 
     try:
-        res = scraper.post(url, headers=headers, data=payload, timeout=15)
+        res = scraper.post(url, headers=headers, data=payload, timeout=20)
         if res.status_code == 200:
             data = res.json()
             html_content = ""
@@ -100,14 +94,36 @@ def fetch_dtek(street_name, house_num):
     except Exception as e:
         print(f"Помилка запиту ({street_name} {house_num}): {e}")
 
-    return ["yes"] * 24
+    return None
 
 def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
     
-    hours_21 = fetch_dtek("шосе Сквирське", "1")
-    hours_22 = fetch_dtek("вул. Кожедуба Івана", "135А")
+    # Створюємо єдину сесію зі збереженням кук
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'desktop': True
+        }
+    )
+
+    # 1. Завантажуємо головну сторінку для отримання захисних кук Cloudflare
+    try:
+        scraper.get("https://www.dtek-krem.com.ua/ua/shutdowns", timeout=15)
+    except Exception as e:
+        print(f"Помилка ініціалізації кук: {e}")
+
+    # 2. Виконуємо безпосередній парсинг
+    hours_21 = fetch_dtek(scraper, "шосе Сквирське", "1")
+    hours_22 = fetch_dtek(scraper, "вул. Кожедуба Івана", "135А")
+
+    # Якщо парсинг повернув None (блокування), зберігаємо значення за замовчуванням
+    if not hours_21:
+        hours_21 = ["yes"] * 24
+    if not hours_22:
+        hours_22 = ["yes"] * 24
 
     new_result = {
         "updated_at": now.strftime("%d.%m.%Y %H:%M"),
@@ -124,9 +140,9 @@ def main():
             pass
 
     changes = []
-    if old_data.get("2.1") and old_data["2.1"] != hours_21:
+    if old_data.get("2.1") and old_data["2.1"] != hours_21 and hours_21 != ["yes"] * 24:
         changes.append("<b>Група 2.1 (шосе Сквирське)</b>: графік змінився!")
-    if old_data.get("2.2") and old_data["2.2"] != hours_22:
+    if old_data.get("2.2") and old_data["2.2"] != hours_22 and hours_22 != ["yes"] * 24:
         changes.append("<b>Група 2.2 (вул. Кожедуба Івана)</b>: графік змінився!")
 
     if changes:
