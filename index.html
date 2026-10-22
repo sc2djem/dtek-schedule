@@ -13,6 +13,8 @@
 
     .card { background: #131e3a; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #23335a; }
     .group-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #38bdf8; }
+    .day-title { font-size: 0.95rem; font-weight: bold; color: #cbd5e1; margin: 0 0 8px; }
+    .day-title.next { margin-top: 20px; }
 
     .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; background: #ffffff; padding: 2px; }
 
@@ -59,6 +61,9 @@
     /* Повідомлення про помилку оновлення */
     .error-banner { display: none; background: #7f1d1d; border: 1px solid #ef4444; color: #fee2e2; border-radius: 10px; padding: 12px 15px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4; }
     .error-banner.visible { display: block; }
+
+    /* Графік на завтра ще не опублікований */
+    .no-data-note { background: #1a2547; border: 1px dashed #3b4f80; color: #94a3b8; border-radius: 10px; padding: 12px; font-size: 0.85rem; text-align: center; }
   </style>
 </head>
 <body>
@@ -69,16 +74,18 @@
 
     <div class="card">
       <div class="group-title">Група 2.1 (шосе Сквирське)</div>
-      <div class="table-wrapper">
-        <table id="table-21"></table>
-      </div>
+      <div class="day-title" id="today-title-21">Сьогодні</div>
+      <div class="table-wrapper"><table id="table-21"></table></div>
+      <div class="day-title next" id="tomorrow-title-21">Завтра</div>
+      <div id="tomorrow-box-21"></div>
     </div>
 
     <div class="card">
       <div class="group-title">Група 2.2 (вул. Кожедуба Івана)</div>
-      <div class="table-wrapper">
-        <table id="table-22"></table>
-      </div>
+      <div class="day-title" id="today-title-22">Сьогодні</div>
+      <div class="table-wrapper"><table id="table-22"></table></div>
+      <div class="day-title next" id="tomorrow-title-22">Завтра</div>
+      <div id="tomorrow-box-22"></div>
     </div>
 
     <!-- Легенда -->
@@ -113,9 +120,13 @@
 
     const SVG_OFF = `<div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M11 15H6l7-14v8h5l-7 14v-8z"/></svg></div>`;
 
-    function renderTable(tableId, hoursData) {
-      const table = document.getElementById(tableId);
-      const currentHour = new Date().getHours();
+    function localToday() {
+      return new Date().toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+    }
+
+    // highlight = true лише для сьогоднішньої таблиці (підсвітка поточної години)
+    function renderTable(table, hoursData, highlight) {
+      const currentHour = highlight ? new Date().getHours() : -1;
       const hasData = Array.isArray(hoursData) && hoursData.length === 24;
 
       let headerHtml = '<tr><th class="header-col">Часові<br>проміжки</th>';
@@ -156,6 +167,25 @@
       table.innerHTML = headerHtml + rowHtml;
     }
 
+    function renderGroup(id, group, data) {
+      const todayLabel = data.today_date ? 'Сьогодні (' + data.today_date + ')' : 'Сьогодні';
+      document.getElementById('today-title-' + id).innerText = todayLabel;
+      renderTable(document.getElementById('table-' + id), data[group], true);
+
+      const tomorrow = data.tomorrow || null;
+      const tomorrowHours = tomorrow ? tomorrow[group] : null;
+      const box = document.getElementById('tomorrow-box-' + id);
+      document.getElementById('tomorrow-title-' + id).innerText =
+        tomorrow && tomorrow.date ? 'Завтра (' + tomorrow.date + ')' : 'Завтра';
+
+      if (Array.isArray(tomorrowHours)) {
+        box.innerHTML = '<div class="table-wrapper"><table></table></div>';
+        renderTable(box.querySelector('table'), tomorrowHours, false);
+      } else {
+        box.innerHTML = '<div class="no-data-note">Графік на завтра ще не опублікований. Зазвичай ДТЕК виводить його ввечері після 19:00.</div>';
+      }
+    }
+
     async function loadSchedule() {
       const banner = document.getElementById('error-banner');
       const lastUpdated = document.getElementById('last-updated');
@@ -165,8 +195,8 @@
 
         const data = await res.json();
 
-        renderTable('table-21', data['2.1']);
-        renderTable('table-22', data['2.2']);
+        renderGroup('21', '2.1', data);
+        renderGroup('22', '2.2', data);
 
         lastUpdated.innerText = 'Дата та час останнього оновлення: ' + (data.updated_at || 'невідомо');
 
@@ -177,12 +207,17 @@
           if (data.error) msg += ' Причина: ' + data.error;
           banner.innerText = msg;
           banner.classList.add('visible');
+        } else if (data.today_date && data.today_date !== localToday()) {
+          banner.innerText = '⚠ Дані застарілі: графік на ' + data.today_date + ', а сьогодні ' + localToday() + '.';
+          banner.classList.add('visible');
         } else {
           banner.classList.remove('visible');
         }
       } catch (err) {
-        renderTable('table-21', null);
-        renderTable('table-22', null);
+        renderTable(document.getElementById('table-21'), null, true);
+        renderTable(document.getElementById('table-22'), null, true);
+        document.getElementById('tomorrow-box-21').innerHTML = '';
+        document.getElementById('tomorrow-box-22').innerHTML = '';
         banner.innerText = '⚠ ' + err.message;
         banner.classList.add('visible');
         lastUpdated.innerText = '';
