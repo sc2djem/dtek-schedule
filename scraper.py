@@ -1,13 +1,16 @@
 import os
-import re
 import json
 import datetime
+from zoneinfo import ZoneInfo
 import cloudscraper
 
 PAGE_URL = "https://www.dtek-krem.com.ua/ua/shutdowns"
 
 # Група на сайті ДТЕК називається GPV2.1 / GPV2.2
 GROUPS = ["2.1", "2.2"]
+
+# Київський час із автоматичним переходом літній/зимовий
+KYIV = ZoneInfo("Europe/Kyiv")
 
 # Значення ДТЕК -> значення, які розуміє index.html
 STATUS_MAP = {
@@ -19,6 +22,10 @@ STATUS_MAP = {
     "msecond": "maybe_second",
     "maybe": "yes",            # "можливе відключення" показуємо як "світло є"
 }
+
+
+def fmt_date(ts):
+    return datetime.datetime.fromtimestamp(int(ts), KYIV).strftime("%d.%m.%Y")
 
 
 def extract_json_after(html, marker):
@@ -37,19 +44,8 @@ def extract_json_after(html, marker):
         return None
 
 
-def hours_for_group(fact, group):
-    """Повертає список із 24 значень для групи на сьогодні або None."""
-    data = fact.get("data") or {}
-    if not data:
-        print("fact.data порожній")
-        return None
-
-    today_key = str(fact.get("today", ""))
-    if today_key not in data:
-        # якщо ключа 'today' немає, беремо найновіший день
-        today_key = max(data.keys(), key=lambda k: int(k))
-    day = data[today_key]
-
+def hours_for_group(day, group):
+    """Повертає список із 24 значень для групи за один день або None."""
     group_key = f"GPV{group}"
     if group_key not in day:
         print(f"Групи {group_key} немає у відповіді. Є: {list(day.keys())}")
@@ -65,7 +61,17 @@ def hours_for_group(fact, group):
     return hours
 
 
-def fetch_schedule():
+def hours_for_all_groups(day):
+    result = {}
+    for group in GROUPS:
+        hours = hours_for_group(day, group)
+        if not hours:
+            return None
+        result[group] = hours
+    return result
+
+
+def fetch_schedule(now):
     scraper = cloudscraper.create_scraper(
         browser={"browser": "chrome", "platform": "windows", "desktop": True}
     )
@@ -83,18 +89,43 @@ def fetch_schedule():
         print("Початок відповіді:", html[:300].replace("\n", " "))
         raise RuntimeError("На сторінці не знайдено DisconSchedule.fact")
 
-    result = {}
-    for group in GROUPS:
-        hours = hours_for_group(fact, group)
-        if not hours:
-            raise RuntimeError(f"Немає даних для групи {group}")
-        result[group] = hours
-    return result
+    data = fact.get("data") or {}
+    if not data:
+        raise RuntimeError("fact.data порожній")
+
+    # Дата -> ключ дня у відповіді ДТЕК
+    by_date = {fmt_date(k): k for k in data.keys()}
+    print("Дні у відповіді ДТЕК:", sorted(by_date.keys()))
+
+    today_str = now.strftime("%d.%m.%Y")
+    tomorrow_str = (now + datetime.timedelta(days=1)).strftime("%d.%m.%Y")
+
+    today_key = by_date.get(today_str)
+    if today_key is None and fact.get("today") is not None:
+        today_key = str(fact["today"])
+        today_str = fmt_date(today_key)
+    if today_key is None or today_key not in data:
+        raise RuntimeError(f"У відповіді немає графіка на сьогодні ({today_str})")
+
+    today = hours_for_all_groups(data[today_key])
+    if not today:
+        raise RuntimeError("Немає даних на сьогодні для однієї з груп")
+
+    tomorrow = None
+    tomorrow_key = by_date.get(tomorrow_str)
+    if tomorrow_key is not None:
+        tomorrow_hours = hours_for_all_groups(data[tomorrow_key])
+        if tomorrow_hours:
+            tomorrow = {"date": tomorrow_str, **tomorrow_hours}
+            print(f"Графік на завтра ({tomorrow_str}) знайдено")
+    if tomorrow is None:
+        print(f"Графіка на завтра ({tomorrow_str}) ще немає")
+
+    return today_str, today, tomorrow
 
 
 def main():
-    kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
-    now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
+    now = datetime.datetime.now(KYIV)
     now_str = now.strftime("%d.%m.%Y %H:%M")
 
     old_data = {}
@@ -106,12 +137,14 @@ def main():
             pass
 
     try:
-        schedule = fetch_schedule()
+        today_str, today, tomorrow = fetch_schedule(now)
         new_data = {
             "status": "ok",
             "updated_at": now_str,
-            "2.1": schedule["2.1"],
-            "2.2": schedule["2.2"],
+            "today_date": today_str,
+            "2.1": today["2.1"],
+            "2.2": today["2.2"],
+            "tomorrow": tomorrow,
         }
         print("OK: графік оновлено")
     except Exception as e:
@@ -122,8 +155,10 @@ def main():
             "error": str(e),
             "checked_at": now_str,
             "updated_at": old_data.get("updated_at", "невідомо"),
+            "today_date": old_data.get("today_date"),
             "2.1": old_data.get("2.1"),
             "2.2": old_data.get("2.2"),
+            "tomorrow": old_data.get("tomorrow"),
         }
 
     with open("data.json", "w", encoding="utf-8") as f:
