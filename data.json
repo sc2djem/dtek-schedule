@@ -1,6 +1,7 @@
 {
   "status": "ok",
-  "updated_at": "22.10.2026 14:07",
+  "updated_at": "22.10.2026 14:32",
+  "today_date": "22.10.2026",
   "2.1": [
     "yes",
     "yes",
@@ -52,5 +53,6 @@
     "no",
     "yes",
     "yes"
-  ]
+  ],
+  "tomorrow": null
 }
