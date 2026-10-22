@@ -1,135 +1,101 @@
 import os
+import re
 import json
 import datetime
-import requests
 import cloudscraper
-from bs4 import BeautifulSoup
 
-def send_telegram_notification(message):
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    
-    if not token or not chat_id:
-        return
+PAGE_URL = "https://www.dtek-krem.com.ua/ua/shutdowns"
 
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "HTML"
-    }
+# Група на сайті ДТЕК називається GPV2.1 / GPV2.2
+GROUPS = ["2.1", "2.2"]
+
+# Значення ДТЕК -> значення, які розуміє index.html
+STATUS_MAP = {
+    "yes": "yes",
+    "no": "no",
+    "first": "maybe_first",    # світла немає перші 30 хв
+    "second": "maybe_second",  # світла немає другі 30 хв
+    "mfirst": "maybe_first",
+    "msecond": "maybe_second",
+    "maybe": "yes",            # "можливе відключення" показуємо як "світло є"
+}
+
+
+def extract_json_after(html, marker):
+    """Знаходить 'marker = {...}' у HTML і повертає розібраний JSON."""
+    pos = html.find(marker)
+    if pos == -1:
+        return None
+    start = html.find("{", pos)
+    if start == -1:
+        return None
     try:
-        requests.post(url, json=payload, timeout=10)
+        obj, _ = json.JSONDecoder().raw_decode(html[start:])
+        return obj
     except Exception as e:
-        print(f"Помилка Telegram: {e}")
-
-def parse_html_table(html_str):
-    if not html_str:
+        print(f"Не вдалося розібрати JSON після '{marker}': {e}")
         return None
 
-    try:
-        soup = BeautifulSoup(html_str, "html.parser")
-        tables = soup.find_all("table")
-        
-        for table in tables:
-            rows = table.find_all("tr")
-            for row in rows:
-                cells = row.find_all("td")
-                status_cells = [
-                    c for c in cells 
-                    if any(k in " ".join(c.get("class", [])) for k in [
-                        "cell-scheduled", "cell-non-scheduled", "cell-first-half", "cell-second-half"
-                    ])
-                ]
-                
-                if len(status_cells) >= 24:
-                    hours = ["yes"] * 24
-                    for i in range(24):
-                        cls = " ".join(status_cells[i].get("class", []))
-                        if "cell-scheduled" in cls:
-                            hours[i] = "no"
-                        elif "cell-first-half" in cls:
-                            hours[i] = "maybe_first"
-                        elif "cell-second-half" in cls:
-                            hours[i] = "maybe_second"
-                        elif "cell-non-scheduled" in cls:
-                            hours[i] = "yes"
-                    return hours
-    except Exception as e:
-        print(f"Помилка парсингу: {e}")
 
-    return None
+def hours_for_group(fact, group):
+    """Повертає список із 24 значень для групи на сьогодні або None."""
+    data = fact.get("data") or {}
+    if not data:
+        print("fact.data порожній")
+        return None
 
-def fetch_dtek(scraper, street_name, house_num):
-    url = "https://www.dtek-krem.com.ua/ua/ajax"
-    
-    headers = {
-        'X-Requested-With': 'XMLHttpRequest',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Referer': 'https://www.dtek-krem.com.ua/ua/shutdowns',
-        'Origin': 'https://www.dtek-krem.com.ua'
-    }
+    today_key = str(fact.get("today", ""))
+    if today_key not in data:
+        # якщо ключа 'today' немає, беремо найновіший день
+        today_key = max(data.keys(), key=lambda k: int(k))
+    day = data[today_key]
 
-    payload = {
-        'method': 'getHomeNum',
-        'data[0][name]': 'city',
-        'data[0][value]': 'м. Біла Церква',
-        'data[1][name]': 'street',
-        'data[1][value]': street_name,
-        'data[2][name]': 'house',
-        'data[2][value]': house_num
-    }
+    group_key = f"GPV{group}"
+    if group_key not in day:
+        print(f"Групи {group_key} немає у відповіді. Є: {list(day.keys())}")
+        return None
 
-    try:
-        res = scraper.post(url, headers=headers, data=payload, timeout=20)
-        if res.status_code == 200:
-            data = res.json()
-            html_content = ""
-            if isinstance(data, dict):
-                html_content = data.get("html", "") or data.get("data", "") or str(data)
-            
-            parsed = parse_html_table(html_content)
-            if parsed:
-                return parsed
-    except Exception as e:
-        print(f"Помилка запиту ({street_name} {house_num}): {e}")
+    raw = day[group_key]
+    hours = []
+    for i in range(1, 25):
+        value = raw.get(str(i), "yes")
+        if value not in STATUS_MAP:
+            print(f"Невідоме значення '{value}' о годині {i}")
+        hours.append(STATUS_MAP.get(value, "yes"))
+    return hours
 
-    return None
+
+def fetch_schedule():
+    scraper = cloudscraper.create_scraper(
+        browser={"browser": "chrome", "platform": "windows", "desktop": True}
+    )
+    res = scraper.get(PAGE_URL, timeout=30)
+    html = res.text
+    print(f"HTTP {res.status_code}, розмір відповіді {len(html)} байт")
+
+    if "Just a moment" in html or "cf-chl" in html:
+        raise RuntimeError("Cloudflare блокує запит (сторінка-перевірка)")
+    if res.status_code != 200:
+        raise RuntimeError(f"Сайт ДТЕК відповів кодом {res.status_code}")
+
+    fact = extract_json_after(html, "DisconSchedule.fact")
+    if not fact:
+        print("Початок відповіді:", html[:300].replace("\n", " "))
+        raise RuntimeError("На сторінці не знайдено DisconSchedule.fact")
+
+    result = {}
+    for group in GROUPS:
+        hours = hours_for_group(fact, group)
+        if not hours:
+            raise RuntimeError(f"Немає даних для групи {group}")
+        result[group] = hours
+    return result
+
 
 def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(datetime.timezone.utc).astimezone(kyiv_tz)
-    
-    # Створюємо єдину сесію зі збереженням кук
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser': 'chrome',
-            'platform': 'windows',
-            'desktop': True
-        }
-    )
-
-    # 1. Завантажуємо головну сторінку для отримання захисних кук Cloudflare
-    try:
-        scraper.get("https://www.dtek-krem.com.ua/ua/shutdowns", timeout=15)
-    except Exception as e:
-        print(f"Помилка ініціалізації кук: {e}")
-
-    # 2. Виконуємо безпосередній парсинг
-    hours_21 = fetch_dtek(scraper, "шосе Сквирське", "1")
-    hours_22 = fetch_dtek(scraper, "вул. Кожедуба Івана", "135А")
-
-    # Якщо парсинг повернув None (блокування), зберігаємо значення за замовчуванням
-    if not hours_21:
-        hours_21 = ["yes"] * 24
-    if not hours_22:
-        hours_22 = ["yes"] * 24
-
-    new_result = {
-        "updated_at": now.strftime("%d.%m.%Y %H:%M"),
-        "2.1": hours_21,
-        "2.2": hours_22
-    }
+    now_str = now.strftime("%d.%m.%Y %H:%M")
 
     old_data = {}
     if os.path.exists("data.json"):
@@ -139,20 +105,30 @@ def main():
         except Exception:
             pass
 
-    changes = []
-    if old_data.get("2.1") and old_data["2.1"] != hours_21 and hours_21 != ["yes"] * 24:
-        changes.append("<b>Група 2.1 (шосе Сквирське)</b>: графік змінився!")
-    if old_data.get("2.2") and old_data["2.2"] != hours_22 and hours_22 != ["yes"] * 24:
-        changes.append("<b>Група 2.2 (вул. Кожедуба Івана)</b>: графік змінився!")
-
-    if changes:
-        msg = f"⚡ <b>Оновлення графіку ДТЕК (м. Біла Церква)</b>\n<i>Час: {now.strftime('%d.%m.%Y %H:%M')}</i>\n\n"
-        msg += "\n".join(changes)
-        msg += "\n\n🔗 <a href='https://sc2djem.github.io/dtek-schedule/'>Переглянути новий графік</a>"
-        send_telegram_notification(msg)
+    try:
+        schedule = fetch_schedule()
+        new_data = {
+            "status": "ok",
+            "updated_at": now_str,
+            "2.1": schedule["2.1"],
+            "2.2": schedule["2.2"],
+        }
+        print("OK: графік оновлено")
+    except Exception as e:
+        print(f"ПОМИЛКА: {e}")
+        # Лишаємо останній успішний графік, але позначаємо помилку
+        new_data = {
+            "status": "error",
+            "error": str(e),
+            "checked_at": now_str,
+            "updated_at": old_data.get("updated_at", "невідомо"),
+            "2.1": old_data.get("2.1"),
+            "2.2": old_data.get("2.2"),
+        }
 
     with open("data.json", "w", encoding="utf-8") as f:
-        json.dump(new_result, f, ensure_ascii=False, indent=2)
+        json.dump(new_data, f, ensure_ascii=False, indent=2)
+
 
 if __name__ == "__main__":
     main()
