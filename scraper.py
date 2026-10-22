@@ -1,7 +1,27 @@
+import os
 import json
 import datetime
+import requests
 import cloudscraper
 from bs4 import BeautifulSoup
+
+def send_telegram_notification(message):
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    
+    if not token or not chat_id:
+        return
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "HTML"
+    }
+    try:
+        requests.post(url, json=payload, timeout=10)
+    except Exception as e:
+        print(f"Помилка Telegram: {e}")
 
 def parse_html_table(html_str):
     if not html_str:
@@ -36,12 +56,18 @@ def parse_html_table(html_str):
                             hours[i] = "yes"
                     return hours
     except Exception as e:
-        print(f"Помилка парсингу: {e}")
+        print(f"Помилка парсингу HTML: {e}")
 
     return None
 
 def fetch_dtek(street_name, house_num):
-    scraper = cloudscraper.create_scraper()
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'desktop': True
+        }
+    )
     url = "https://www.dtek-krem.com.ua/ua/ajax"
     
     headers = {
@@ -74,13 +100,7 @@ def fetch_dtek(street_name, house_num):
     except Exception as e:
         print(f"Помилка запиту ({street_name} {house_num}): {e}")
 
-    # Точний резервний шаблон за графіком ДТЕК з вашого скріншоту для групи 2.2
-    # 06-08 (no), 08-09 (maybe_second), 13-17 (no), 17-18 (maybe_first)
-    if "Кожедуба" in street_name:
-        return ["yes"]*6 + ["no"]*2 + ["maybe_second"] + ["yes"]*4 + ["no"]*4 + ["maybe_first"] + ["yes"]*6
-
-    # Для Сквирського шосе 1 (група 2.1)
-    return ["yes"]*6 + ["no"]*3 + ["yes"]*4 + ["no"]*5 + ["yes"]*6
+    return ["yes"] * 24
 
 def main():
     kyiv_tz = datetime.timezone(datetime.timedelta(hours=3))
@@ -89,14 +109,34 @@ def main():
     hours_21 = fetch_dtek("шосе Сквирське", "1")
     hours_22 = fetch_dtek("вул. Кожедуба Івана", "135А")
 
-    result = {
+    new_result = {
         "updated_at": now.strftime("%d.%m.%Y %H:%M"),
         "2.1": hours_21,
         "2.2": hours_22
     }
 
+    old_data = {}
+    if os.path.exists("data.json"):
+        try:
+            with open("data.json", "r", encoding="utf-8") as f:
+                old_data = json.load(f)
+        except Exception:
+            pass
+
+    changes = []
+    if old_data.get("2.1") and old_data["2.1"] != hours_21:
+        changes.append("<b>Група 2.1 (шосе Сквирське)</b>: графік змінився!")
+    if old_data.get("2.2") and old_data["2.2"] != hours_22:
+        changes.append("<b>Група 2.2 (вул. Кожедуба Івана)</b>: графік змінився!")
+
+    if changes:
+        msg = f"⚡ <b>Оновлення графіку ДТЕК (м. Біла Церква)</b>\n<i>Час: {now.strftime('%d.%m.%Y %H:%M')}</i>\n\n"
+        msg += "\n".join(changes)
+        msg += "\n\n🔗 <a href='https://sc2djem.github.io/dtek-schedule/'>Переглянути новий графік</a>"
+        send_telegram_notification(msg)
+
     with open("data.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
+        json.dump(new_result, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":
     main()
