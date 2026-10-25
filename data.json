@@ -1,6 +1,6 @@
 {
   "status": "ok",
-  "updated_at": "25.10.2026 18:39",
+  "updated_at": "25.10.2026 21:16",
   "today_date": "25.10.2026",
   "2.1": [
     "yes",
@@ -54,5 +54,59 @@
     "yes",
     "yes"
   ],
-  "tomorrow": null
+  "tomorrow": {
+    "date": "26.10.2026",
+    "2.1": [
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "no",
+      "no",
+      "no",
+      "no",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "maybe_second",
+      "no",
+      "yes",
+      "yes",
+      "yes"
+    ],
+    "2.2": [
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "no",
+      "no",
+      "no",
+      "no",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "maybe_second",
+      "no",
+      "yes",
+      "yes",
+      "yes"
+    ]
+  }
 }
