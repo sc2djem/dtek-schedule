@@ -1,7 +1,6 @@
 {
-  "status": "error",
-  "error": "На сторінці не знайдено DisconSchedule.fact",
-  "updated_at": "26.10.2026 20:30",
+  "status": "ok",
+  "updated_at": "26.10.2026 22:30",
   "today_date": "26.10.2026",
   "2.1": [
     "yes",
