@@ -3,8 +3,10 @@ import json
 import datetime
 from zoneinfo import ZoneInfo
 import cloudscraper
+import requests
 
 PAGE_URL = "https://www.dtek-krem.com.ua/ua/shutdowns"
+PUBLISHED_DATA_URL = "https://sc2djem.github.io/dtek-schedule/data.json"
 
 # Група на сайті ДТЕК називається GPV2.1 / GPV2.2
 GROUPS = ["2.1", "2.2"]
@@ -124,36 +126,100 @@ def fetch_schedule(now):
     return today_str, today, tomorrow
 
 
+def tomorrow_published(old_data, now):
+    t = old_data.get("tomorrow")
+    if not t:
+        return False
+    return t.get("date") == (now + datetime.timedelta(days=1)).strftime("%d.%m.%Y")
+
+
+def should_fetch(now, old_data):
+    """Вирішує, чи треба ходити на сайт ДТЕК у цьому запуску (за київським часом).
+
+    Запуски приходять від cron-job.org за розкладом; тут лише додаткові правила.
+    """
+    # Примусовий запуск: галочка при ручному запуску або зміна файлів
+    if os.environ.get("FORCE_RUN") == "true" or os.environ.get("GITHUB_EVENT_NAME") == "push":
+        return True, "примусовий запуск"
+
+    t = now.hour * 60 + now.minute
+
+    # Ніч: після 22:30 і до 06:00 без оновлень.
+    # Єдиний виняток: після півночі, бо "завтра" стало "сьогодні".
+    if t > 22 * 60 + 30 or t < 6 * 60:
+        if old_data.get("today_date") != now.strftime("%d.%m.%Y"):
+            return True, "ніч: одне оновлення, бо настала нова доба"
+        return False, "ніч (22:30-06:00): без оновлень"
+
+    # Вечір з 19:00 до 22:30
+    if t >= 19 * 60:
+        if not tomorrow_published(old_data, now):
+            return True, "вечір: чекаємо графік на завтра, кожні 15 хв"
+        if now.minute % 30 < 15:
+            return True, "вечір, графік на завтра вже є: кожні 30 хв"
+        return False, "вечір, графік на завтра вже є: пропуск (кожні 30 хв)"
+
+    return True, "день: кожні 30 хв"
+
+
+def load_old_data():
+    """Останній відомий графік: спочатку з файлу в репозиторії, потім з опублікованої сторінки."""
+    if os.path.exists("data.json"):
+        try:
+            with open("data.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    try:
+        res = requests.get(
+            PUBLISHED_DATA_URL,
+            params={"t": int(datetime.datetime.now().timestamp())},
+            timeout=15,
+        )
+        if res.status_code == 200:
+            return res.json()
+    except Exception as e:
+        print(f"Не вдалося завантажити попередній data.json: {e}")
+    return {}
+
+
+IGNORED_KEYS = {"updated_at", "checked_at"}
+
+
+def same_content(a, b):
+    def strip(d):
+        return {k: v for k, v in d.items() if k not in IGNORED_KEYS}
+    return strip(a) == strip(b)
+
+
 def main():
     now = datetime.datetime.now(KYIV)
     now_str = now.strftime("%d.%m.%Y %H:%M")
 
-    old_data = {}
-    if os.path.exists("data.json"):
-        try:
-            with open("data.json", "r", encoding="utf-8") as f:
-                old_data = json.load(f)
-        except Exception:
-            pass
+    old_data = load_old_data()
+
+    go, reason = should_fetch(now, old_data)
+    print(f"Київ {now_str}: {reason}")
+    if not go:
+        return
 
     try:
         today_str, today, tomorrow = fetch_schedule(now)
         new_data = {
             "status": "ok",
-            "updated_at": now_str,
+            "updated_at": now_str,  # час, коли графік востаннє змінився
             "today_date": today_str,
             "2.1": today["2.1"],
             "2.2": today["2.2"],
             "tomorrow": tomorrow,
         }
-        print("OK: графік оновлено")
+        print("OK: дані з сайту ДТЕК отримано")
     except Exception as e:
         print(f"ПОМИЛКА: {e}")
         # Лишаємо останній успішний графік, але позначаємо помилку
         new_data = {
             "status": "error",
             "error": str(e),
-            "checked_at": now_str,
             "updated_at": old_data.get("updated_at", "невідомо"),
             "today_date": old_data.get("today_date"),
             "2.1": old_data.get("2.1"),
@@ -161,8 +227,13 @@ def main():
             "tomorrow": old_data.get("tomorrow"),
         }
 
+    if old_data and same_content(old_data, new_data):
+        print("Графік не змінився: data.json не переписуємо")
+        return
+
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(new_data, f, ensure_ascii=False, indent=2)
+    print("data.json оновлено")
 
 
 if __name__ == "__main__":
