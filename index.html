@@ -9,7 +9,19 @@
     * { box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #0b1329; color: #ffffff; margin: 0; padding: 15px; }
     .container { max-width: 1050px; margin: 0 auto; }
-    h1 { text-align: center; font-size: 1.5rem; margin-bottom: 25px; }
+    h1 { text-align: center; font-size: 1.5rem; margin: 0 0 15px; }
+
+    .toolbar { display: flex; justify-content: center; margin-bottom: 15px; }
+    .btn-ghost { background: #131e3a; color: #cbd5e1; border: 1px solid #23335a; border-radius: 8px; padding: 8px 16px; font-size: 0.9rem; cursor: pointer; }
+    .btn-ghost:hover { border-color: #38bdf8; color: #ffffff; }
+
+    .settings { display: none; background: #131e3a; border: 1px solid #23335a; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+    .settings.open { display: block; }
+    .settings-title { font-weight: bold; color: #38bdf8; margin-bottom: 4px; }
+    .settings-hint { font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px; }
+    .group-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px 16px; }
+    .group-item { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; cursor: pointer; }
+    .group-item input { width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer; }
 
     .card { background: #131e3a; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #23335a; }
     .group-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #38bdf8; }
@@ -26,31 +38,18 @@
 
     .time-text { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block; white-space: nowrap; font-size: 0.75rem; letter-spacing: 1px; }
 
-    /* Повне відключення (1 година) */
     .cell-no { background: #d1d5db; }
-
-    /* Півгодинні відключення */
-    .cell-maybe_first {
-      background: linear-gradient(90deg, #d1d5db 50%, #ffffff 50%);
-    }
-    .cell-maybe_second {
-      background: linear-gradient(90deg, #ffffff 50%, #d1d5db 50%);
-    }
-
-    /* Даних немає */
+    .cell-maybe_first { background: linear-gradient(90deg, #d1d5db 50%, #ffffff 50%); }
+    .cell-maybe_second { background: linear-gradient(90deg, #ffffff 50%, #d1d5db 50%); }
     .cell-unknown { background: #fef3c7; color: #92400e; font-weight: bold; font-size: 1rem; }
 
-    /* SVG-іконки перекресленої блискавки */
     .icon-wrap { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; position: relative; }
     .icon-wrap svg { width: 18px; height: 18px; fill: #1e293b; }
-
     .cell-maybe_first .icon-wrap svg { margin-right: 50%; }
     .cell-maybe_second .icon-wrap svg { margin-left: 50%; }
 
-    /* Поточна година */
     .current-hour-col { outline: 2px solid #0284c7; outline-offset: -2px; z-index: 2; }
 
-    /* Легенда */
     .legend { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; font-size: 0.85rem; color: #94a3b8; }
     .legend-item { display: flex; align-items: center; gap: 8px; }
     .legend-box { width: 22px; height: 22px; border-radius: 4px; border: 1px solid #cbd5e1; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -58,11 +57,9 @@
     .btn { display: block; width: 100%; max-width: 320px; margin: 25px auto 0; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
     .updated-text { text-align: center; font-size: 0.85rem; color: #94a3b8; margin-top: 15px; }
 
-    /* Повідомлення про помилку оновлення */
     .error-banner { display: none; background: #7f1d1d; border: 1px solid #ef4444; color: #fee2e2; border-radius: 10px; padding: 12px 15px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.4; }
     .error-banner.visible { display: block; }
 
-    /* Графік на завтра ще не опублікований */
     .no-data-note { background: #1a2547; border: 1px dashed #3b4f80; color: #94a3b8; border-radius: 10px; padding: 12px; font-size: 0.85rem; text-align: center; }
   </style>
 </head>
@@ -70,25 +67,20 @@
   <div class="container">
     <h1>Графіки відключень ДТЕК (м. Біла Церква)</h1>
 
+    <div class="toolbar">
+      <button class="btn-ghost" id="toggle-settings" type="button">⚙ Вибрати групи</button>
+    </div>
+
+    <div class="settings" id="settings">
+      <div class="settings-title">Які групи показувати</div>
+      <div class="settings-hint">Вибір зберігається в цьому браузері. Дані завантажуються для всіх груп, вимкнена група просто не відображається.</div>
+      <div class="group-list" id="group-list"></div>
+    </div>
+
     <div class="error-banner" id="error-banner"></div>
 
-    <div class="card">
-      <div class="group-title">Група 2.1 (шосе Сквирське)</div>
-      <div class="day-title" id="today-title-21">Сьогодні</div>
-      <div class="table-wrapper"><table id="table-21"></table></div>
-      <div class="day-title next" id="tomorrow-title-21">Завтра</div>
-      <div id="tomorrow-box-21"></div>
-    </div>
+    <div id="groups"></div>
 
-    <div class="card">
-      <div class="group-title">Група 2.2 (вул. Кожедуба Івана)</div>
-      <div class="day-title" id="today-title-22">Сьогодні</div>
-      <div class="table-wrapper"><table id="table-22"></table></div>
-      <div class="day-title next" id="tomorrow-title-22">Завтра</div>
-      <div id="tomorrow-box-22"></div>
-    </div>
-
-    <!-- Легенда -->
     <div class="legend">
       <div class="legend-item"><div class="legend-box"></div> Світло є</div>
       <div class="legend-item">
@@ -117,14 +109,57 @@
 
   <script>
     const HOURS = ['00-01','01-02','02-03','03-04','04-05','05-06','06-07','07-08','08-09','09-10','10-11','11-12','12-13','13-14','14-15','15-16','16-17','17-18','18-19','19-20','20-21','21-22','22-23','23-24'];
-
     const SVG_OFF = `<div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M11 15H6l7-14v8h5l-7 14v-8z"/></svg></div>`;
+
+    // Підписи груп (вулиці, які користувач знає); для інших груп показуємо лише номер
+    const GROUP_LABELS = { '2.1': 'шосе Сквирське', '2.2': 'вул. Кожедуба Івана' };
+    const DEFAULT_VISIBLE = ['2.1', '2.2'];
+    const STORAGE_KEY = 'visibleGroups';
+
+    let lastData = null;
+    let visible = loadVisible();
+
+    function loadVisible() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) return arr;
+        }
+      } catch (e) {}
+      return DEFAULT_VISIBLE.slice();
+    }
+
+    function saveVisible() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(visible)); } catch (e) {}
+    }
+
+    function groupTitle(id) {
+      return 'Група ' + id + (GROUP_LABELS[id] ? ' (' + GROUP_LABELS[id] + ')' : '');
+    }
+
+    function compareGroups(a, b) {
+      const [a1, a2] = a.split('.').map(Number);
+      const [b1, b2] = b.split('.').map(Number);
+      return a1 - b1 || a2 - b2;
+    }
 
     function localToday() {
       return new Date().toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
     }
 
-    // highlight = true лише для сьогоднішньої таблиці (підсвітка поточної години)
+    // Нормалізація: новий формат (data.groups) або старий (поля "2.1", "2.2")
+    function normalize(data) {
+      if (data.groups && typeof data.groups === 'object') {
+        return { groups: data.groups, tomorrowDate: data.tomorrow && data.tomorrow.date };
+      }
+      const groups = {};
+      ['2.1', '2.2'].forEach(g => {
+        if (data[g]) groups[g] = { today: data[g], tomorrow: data.tomorrow ? data.tomorrow[g] : null };
+      });
+      return { groups, tomorrowDate: data.tomorrow && data.tomorrow.date };
+    }
+
     function renderTable(table, hoursData, highlight) {
       const currentHour = highlight ? new Date().getHours() : -1;
       const hasData = Array.isArray(hoursData) && hoursData.length === 24;
@@ -139,7 +174,6 @@
       let rowHtml = '<tr><td class="header-col">Стан</td>';
       for (let i = 0; i < 24; i++) {
         const isCurrent = i === currentHour ? 'current-hour-col' : '';
-
         let cellContent = '';
         let cellClass = 'cell-yes';
 
@@ -148,81 +182,142 @@
           cellContent = '?';
         } else {
           const status = hoursData[i] || 'yes';
-          if (status === 'no') {
-            cellClass = 'cell-no';
-            cellContent = SVG_OFF;
-          } else if (status === 'maybe_first') {
-            cellClass = 'cell-maybe_first';
-            cellContent = SVG_OFF;
-          } else if (status === 'maybe_second') {
-            cellClass = 'cell-maybe_second';
-            cellContent = SVG_OFF;
-          }
+          if (status === 'no') { cellClass = 'cell-no'; cellContent = SVG_OFF; }
+          else if (status === 'maybe_first') { cellClass = 'cell-maybe_first'; cellContent = SVG_OFF; }
+          else if (status === 'maybe_second') { cellClass = 'cell-maybe_second'; cellContent = SVG_OFF; }
         }
-
         rowHtml += `<td class="${cellClass} ${isCurrent}">${cellContent}</td>`;
       }
       rowHtml += '</tr>';
-
       table.innerHTML = headerHtml + rowHtml;
     }
 
-    function renderGroup(id, group, data) {
-      const todayLabel = data.today_date ? 'Сьогодні (' + data.today_date + ')' : 'Сьогодні';
-      document.getElementById('today-title-' + id).innerText = todayLabel;
-      renderTable(document.getElementById('table-' + id), data[group], true);
+    function makeTableBlock(hours, highlight) {
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrapper';
+      const table = document.createElement('table');
+      wrap.appendChild(table);
+      renderTable(table, hours, highlight);
+      return wrap;
+    }
 
-      const tomorrow = data.tomorrow || null;
-      const tomorrowHours = tomorrow ? tomorrow[group] : null;
-      const box = document.getElementById('tomorrow-box-' + id);
-      document.getElementById('tomorrow-title-' + id).innerText =
-        tomorrow && tomorrow.date ? 'Завтра (' + tomorrow.date + ')' : 'Завтра';
+    function renderGroupCard(id, info, todayDate, tomorrowDate) {
+      const card = document.createElement('div');
+      card.className = 'card';
 
-      if (Array.isArray(tomorrowHours)) {
-        box.innerHTML = '<div class="table-wrapper"><table></table></div>';
-        renderTable(box.querySelector('table'), tomorrowHours, false);
+      const title = document.createElement('div');
+      title.className = 'group-title';
+      title.textContent = groupTitle(id);
+      card.appendChild(title);
+
+      const t1 = document.createElement('div');
+      t1.className = 'day-title';
+      t1.textContent = todayDate ? 'Сьогодні (' + todayDate + ')' : 'Сьогодні';
+      card.appendChild(t1);
+      card.appendChild(makeTableBlock(info.today, true));
+
+      const t2 = document.createElement('div');
+      t2.className = 'day-title next';
+      t2.textContent = tomorrowDate ? 'Завтра (' + tomorrowDate + ')' : 'Завтра';
+      card.appendChild(t2);
+
+      if (Array.isArray(info.tomorrow)) {
+        card.appendChild(makeTableBlock(info.tomorrow, false));
       } else {
-        box.innerHTML = '<div class="no-data-note">Графік на завтра ще не опублікований. Зазвичай ДТЕК виводить його ввечері після 19:00.</div>';
+        const note = document.createElement('div');
+        note.className = 'no-data-note';
+        note.textContent = 'Графік на завтра ще не опублікований. Зазвичай ДТЕК виводить його ввечері після 19:00.';
+        card.appendChild(note);
       }
+      return card;
+    }
+
+    function renderSettings(groupIds) {
+      const list = document.getElementById('group-list');
+      list.innerHTML = '';
+      groupIds.forEach(id => {
+        const label = document.createElement('label');
+        label.className = 'group-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = visible.includes(id);
+        cb.addEventListener('change', () => {
+          visible = cb.checked ? visible.concat([id]) : visible.filter(x => x !== id);
+          saveVisible();
+          renderAll();
+        });
+        const span = document.createElement('span');
+        span.textContent = groupTitle(id);
+        label.appendChild(cb);
+        label.appendChild(span);
+        list.appendChild(label);
+      });
+    }
+
+    function renderAll() {
+      if (!lastData) return;
+      const { groups, tomorrowDate } = normalize(lastData);
+      const ids = Object.keys(groups).sort(compareGroups);
+
+      renderSettings(ids);
+
+      const container = document.getElementById('groups');
+      container.innerHTML = '';
+      const shown = ids.filter(id => visible.includes(id));
+      if (shown.length === 0) {
+        const note = document.createElement('div');
+        note.className = 'no-data-note';
+        note.textContent = 'Жодної групи не вибрано. Натисніть «Вибрати групи» вгорі й позначте потрібні.';
+        container.appendChild(note);
+        return;
+      }
+      shown.forEach(id => {
+        container.appendChild(renderGroupCard(id, groups[id], lastData.today_date, tomorrowDate));
+      });
+    }
+
+    function showBanner(text) {
+      const banner = document.getElementById('error-banner');
+      if (text) { banner.innerText = text; banner.classList.add('visible'); }
+      else { banner.classList.remove('visible'); }
     }
 
     async function loadSchedule() {
-      const banner = document.getElementById('error-banner');
       const lastUpdated = document.getElementById('last-updated');
       try {
         const res = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
         if (!res.ok) throw new Error('Не вдалося завантажити data.json (код ' + res.status + ')');
-
         const data = await res.json();
+        lastData = data;
+        renderAll();
 
-        renderGroup('21', '2.1', data);
-        renderGroup('22', '2.2', data);
+        lastUpdated.innerText = 'Графік востаннє змінився: ' + (data.updated_at || 'невідомо');
 
-        lastUpdated.innerText = 'Дата та час останнього оновлення: ' + (data.updated_at || 'невідомо');
-
+        let banner = '';
         if (data.status === 'error') {
-          let msg = '⚠ Не вдалося оновити дані з сайту ДТЕК';
-          if (data.checked_at) msg += ' (остання спроба: ' + data.checked_at + ')';
-          msg += '. Показано останній відомий графік.';
-          if (data.error) msg += ' Причина: ' + data.error;
-          banner.innerText = msg;
-          banner.classList.add('visible');
-        } else if (data.today_date && data.today_date !== localToday()) {
-          banner.innerText = '⚠ Дані застарілі: графік на ' + data.today_date + ', а сьогодні ' + localToday() + '.';
-          banner.classList.add('visible');
-        } else {
-          banner.classList.remove('visible');
+          // Одиничні короткі збої не показуємо: банер лише якщо помилка триває 3 години і більше
+          const since = data.error_since_ts ? (Date.now() / 1000 - data.error_since_ts) : Infinity;
+          if (since >= 3 * 3600) {
+            banner = '⚠ Не вдалося оновити дані з сайту ДТЕК' +
+              (data.error_since ? ' (з ' + data.error_since + ')' : '') +
+              '. Показано останній відомий графік.' + (data.error ? ' Причина: ' + data.error : '');
+          }
         }
+        if (!banner && data.today_date && data.today_date !== localToday()) {
+          banner = '⚠ Дані застарілі: графік на ' + data.today_date + ', а сьогодні ' + localToday() + '.';
+        }
+        showBanner(banner);
       } catch (err) {
-        renderTable(document.getElementById('table-21'), null, true);
-        renderTable(document.getElementById('table-22'), null, true);
-        document.getElementById('tomorrow-box-21').innerHTML = '';
-        document.getElementById('tomorrow-box-22').innerHTML = '';
-        banner.innerText = '⚠ ' + err.message;
-        banner.classList.add('visible');
+        lastData = null;
+        document.getElementById('groups').innerHTML = '';
+        showBanner('⚠ ' + err.message);
         lastUpdated.innerText = '';
       }
     }
+
+    document.getElementById('toggle-settings').addEventListener('click', () => {
+      document.getElementById('settings').classList.toggle('open');
+    });
 
     loadSchedule();
   </script>
