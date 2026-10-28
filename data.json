@@ -1,9 +1,63 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "28.10.2026 12:00",
+  "updated_at": "28.10.2026 19:30",
   "today_date": "28.10.2026",
-  "tomorrow": null,
+  "tomorrow": {
+    "date": "29.10.2026",
+    "2.1": [
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "maybe_second",
+      "no",
+      "no",
+      "no",
+      "maybe_first",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "no",
+      "no",
+      "no"
+    ],
+    "2.2": [
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "maybe_second",
+      "no",
+      "no",
+      "no",
+      "maybe_first",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "yes",
+      "no",
+      "no",
+      "no"
+    ]
+  },
   "groups": {
     "1.1": {
       "today": [
@@ -32,7 +86,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no"
+      ]
     },
     "1.2": {
       "today": [
@@ -61,7 +140,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes"
+      ]
     },
     "2.1": {
       "today": [
@@ -90,7 +194,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no"
+      ]
     },
     "2.2": {
       "today": [
@@ -119,7 +248,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no"
+      ]
     },
     "3.1": {
       "today": [
@@ -148,7 +302,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes"
+      ]
     },
     "3.2": {
       "today": [
@@ -177,7 +356,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes"
+      ]
     },
     "4.1": {
       "today": [
@@ -206,7 +410,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes"
+      ]
     },
     "4.2": {
       "today": [
@@ -235,7 +464,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes"
+      ]
     },
     "5.1": {
       "today": [
@@ -264,7 +518,32 @@
         "no",
         "no"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes"
+      ]
     },
     "5.2": {
       "today": [
@@ -293,7 +572,32 @@
         "yes",
         "yes"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "no",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes"
+      ]
     },
     "6.1": {
       "today": [
@@ -322,7 +626,32 @@
         "no",
         "no"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes"
+      ]
     },
     "6.2": {
       "today": [
@@ -351,7 +680,32 @@
         "no",
         "no"
       ],
-      "tomorrow": null
+      "tomorrow": [
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "yes",
+        "maybe_second",
+        "no",
+        "no",
+        "no",
+        "maybe_first",
+        "yes",
+        "yes"
+      ]
     }
   },
   "2.1": [
