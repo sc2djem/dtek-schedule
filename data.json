@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "28.10.2026 19:30",
+  "updated_at": "28.10.2026 20:30",
   "today_date": "28.10.2026",
   "tomorrow": {
     "date": "29.10.2026",
@@ -298,7 +298,7 @@
         "no",
         "no",
         "no",
-        "yes",
+        "no",
         "yes",
         "yes"
       ],
@@ -321,9 +321,9 @@
         "no",
         "no",
         "no",
-        "no",
-        "no",
-        "no",
+        "yes",
+        "yes",
+        "yes",
         "yes",
         "yes",
         "yes"
@@ -352,7 +352,7 @@
         "no",
         "no",
         "no",
-        "yes",
+        "no",
         "yes",
         "yes"
       ],
@@ -429,9 +429,9 @@
         "no",
         "no",
         "no",
-        "yes",
-        "yes",
-        "yes",
+        "no",
+        "no",
+        "no",
         "yes",
         "yes",
         "yes"
