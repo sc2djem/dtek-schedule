@@ -99,6 +99,13 @@ def fetch_schedule(now):
     by_date = {fmt_date(k): k for k in data.keys()}
     print("Дні у відповіді ДТЕК:", sorted(by_date.keys()))
 
+    # Діагностика: які групи реально є у відповіді (лише для журналу)
+    print("Ключі fact:", sorted(fact.keys()))
+    print("preset на сторінці:", "DisconSchedule.preset" in html)
+    for date_str, key in sorted(by_date.items()):
+        groups_in_day = sorted(data[key].keys())
+        print(f"Групи за {date_str} ({len(groups_in_day)}): {groups_in_day}")
+
     today_str = now.strftime("%d.%m.%Y")
     tomorrow_str = (now + datetime.timedelta(days=1)).strftime("%d.%m.%Y")
 
