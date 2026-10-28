@@ -1,5 +1,7 @@
 import os
+import re
 import json
+import time
 import datetime
 from zoneinfo import ZoneInfo
 import cloudscraper
@@ -8,13 +10,10 @@ import requests
 PAGE_URL = "https://www.dtek-krem.com.ua/ua/shutdowns"
 PUBLISHED_DATA_URL = "https://sc2djem.github.io/dtek-schedule/data.json"
 
-# Група на сайті ДТЕК називається GPV2.1 / GPV2.2
-GROUPS = ["2.1", "2.2"]
-
 # Київський час із автоматичним переходом літній/зимовий
 KYIV = ZoneInfo("Europe/Kyiv")
 
-# Значення ДТЕК -> значення, які розуміє index.html
+# Значення ДТЕК -> значення, які розуміє index.html і застосунок
 STATUS_MAP = {
     "yes": "yes",
     "no": "no",
@@ -24,6 +23,9 @@ STATUS_MAP = {
     "msecond": "maybe_second",
     "maybe": "yes",            # "можливе відключення" показуємо як "світло є"
 }
+
+# Групи, які залишаються окремими полями data.json для сумісності зі старим застосунком
+LEGACY_GROUPS = ("2.1", "2.2")
 
 
 def fmt_date(ts):
@@ -50,26 +52,37 @@ def hours_for_group(day, group):
     """Повертає список із 24 значень для групи за один день або None."""
     group_key = f"GPV{group}"
     if group_key not in day:
-        print(f"Групи {group_key} немає у відповіді. Є: {list(day.keys())}")
+        return None
+    raw = day[group_key]
+    if not isinstance(raw, dict):
+        print(f"Група {group}: неочікуваний формат даних")
         return None
 
-    raw = day[group_key]
     hours = []
     for i in range(1, 25):
         value = raw.get(str(i), "yes")
         if value not in STATUS_MAP:
-            print(f"Невідоме значення '{value}' о годині {i}")
+            print(f"Невідоме значення '{value}' о годині {i} (група {group})")
         hours.append(STATUS_MAP.get(value, "yes"))
     return hours
 
 
-def hours_for_all_groups(day):
+def group_ids(day):
+    """Усі групи, що є у відповіді, у порядку 1.1, 1.2, 2.1 ..."""
+    ids = []
+    for key in day.keys():
+        m = re.fullmatch(r"GPV(\d+)\.(\d+)", key)
+        if m:
+            ids.append((int(m.group(1)), int(m.group(2))))
+    return [f"{a}.{b}" for a, b in sorted(ids)]
+
+
+def all_groups_hours(day):
     result = {}
-    for group in GROUPS:
-        hours = hours_for_group(day, group)
-        if not hours:
-            return None
-        result[group] = hours
+    for g in group_ids(day):
+        hours = hours_for_group(day, g)
+        if hours:
+            result[g] = hours
     return result
 
 
@@ -83,6 +96,8 @@ def fetch_schedule(now):
 
     if "Just a moment" in html or "cf-chl" in html:
         raise RuntimeError("Cloudflare блокує запит (сторінка-перевірка)")
+    if len(html) < 10000 and "_Incapsula_Resource" in html:
+        raise RuntimeError("ДТЕК показав сторінку захисту від автоматичних запитів (Incapsula)")
     if res.status_code != 200:
         raise RuntimeError(f"Сайт ДТЕК відповів кодом {res.status_code}")
 
@@ -99,13 +114,6 @@ def fetch_schedule(now):
     by_date = {fmt_date(k): k for k in data.keys()}
     print("Дні у відповіді ДТЕК:", sorted(by_date.keys()))
 
-    # Діагностика: які групи реально є у відповіді (лише для журналу)
-    print("Ключі fact:", sorted(fact.keys()))
-    print("preset на сторінці:", "DisconSchedule.preset" in html)
-    for date_str, key in sorted(by_date.items()):
-        groups_in_day = sorted(data[key].keys())
-        print(f"Групи за {date_str} ({len(groups_in_day)}): {groups_in_day}")
-
     today_str = now.strftime("%d.%m.%Y")
     tomorrow_str = (now + datetime.timedelta(days=1)).strftime("%d.%m.%Y")
 
@@ -116,21 +124,36 @@ def fetch_schedule(now):
     if today_key is None or today_key not in data:
         raise RuntimeError(f"У відповіді немає графіка на сьогодні ({today_str})")
 
-    today = hours_for_all_groups(data[today_key])
-    if not today:
-        raise RuntimeError("Немає даних на сьогодні для однієї з груп")
+    today_groups = all_groups_hours(data[today_key])
+    print(f"Груп на сьогодні: {len(today_groups)}")
+    if not today_groups:
+        raise RuntimeError("У відповіді немає жодної групи (структура даних змінилась?)")
 
-    tomorrow = None
+    tomorrow_groups = None
     tomorrow_key = by_date.get(tomorrow_str)
     if tomorrow_key is not None:
-        tomorrow_hours = hours_for_all_groups(data[tomorrow_key])
-        if tomorrow_hours:
-            tomorrow = {"date": tomorrow_str, **tomorrow_hours}
-            print(f"Графік на завтра ({tomorrow_str}) знайдено")
-    if tomorrow is None:
+        tg = all_groups_hours(data[tomorrow_key])
+        if tg:
+            tomorrow_groups = tg
+            print(f"Графік на завтра ({tomorrow_str}) знайдено, груп: {len(tg)}")
+    if tomorrow_groups is None:
         print(f"Графіка на завтра ({tomorrow_str}) ще немає")
 
-    return today_str, today, tomorrow
+    return today_str, today_groups, tomorrow_str, tomorrow_groups
+
+
+def fetch_with_retries(now, attempts=3, delay=45):
+    """ДТЕК іноді на кілька хвилин показує сторінку захисту, тому пробуємо кілька разів."""
+    last_error = None
+    for i in range(attempts):
+        try:
+            return fetch_schedule(now)
+        except Exception as e:
+            last_error = e
+            print(f"Спроба {i + 1} з {attempts} невдала: {e}")
+            if i < attempts - 1:
+                time.sleep(delay)
+    raise last_error
 
 
 def tomorrow_published(old_data, now):
@@ -199,6 +222,31 @@ def same_content(a, b):
     return strip(a) == strip(b)
 
 
+def build_data(now_str, today_str, today_groups, tomorrow_str, tomorrow_groups):
+    groups = {
+        g: {"today": hours, "tomorrow": (tomorrow_groups or {}).get(g)}
+        for g, hours in today_groups.items()
+    }
+    tomorrow_legacy = None
+    if tomorrow_groups:
+        tomorrow_legacy = {"date": tomorrow_str}
+        for g in LEGACY_GROUPS:
+            tomorrow_legacy[g] = tomorrow_groups.get(g)
+
+    data = {
+        "schema": 2,
+        "status": "ok",
+        "updated_at": now_str,  # час, коли графік востаннє змінився
+        "today_date": today_str,
+        "tomorrow": tomorrow_legacy,
+        "groups": groups,
+    }
+    # Старі поля для групи 2.1 і 2.2 (їх читає поточний застосунок)
+    for g in LEGACY_GROUPS:
+        data[g] = today_groups.get(g)
+    return data
+
+
 def main():
     now = datetime.datetime.now(KYIV)
     now_str = now.strftime("%d.%m.%Y %H:%M")
@@ -211,31 +259,22 @@ def main():
         return
 
     try:
-        today_str, today, tomorrow = fetch_schedule(now)
-        new_data = {
-            "status": "ok",
-            "updated_at": now_str,  # час, коли графік востаннє змінився
-            "today_date": today_str,
-            "2.1": today["2.1"],
-            "2.2": today["2.2"],
-            "tomorrow": tomorrow,
-        }
+        today_str, today_groups, tomorrow_str, tomorrow_groups = fetch_with_retries(now)
+        new_data = build_data(now_str, today_str, today_groups, tomorrow_str, tomorrow_groups)
         print("OK: дані з сайту ДТЕК отримано")
     except Exception as e:
         print(f"ПОМИЛКА: {e}")
-        # Лишаємо останній успішний графік, але позначаємо помилку
-        new_data = {
-            "status": "error",
-            "error": str(e),
-            "updated_at": old_data.get("updated_at", "невідомо"),
-            "today_date": old_data.get("today_date"),
-            "2.1": old_data.get("2.1"),
-            "2.2": old_data.get("2.2"),
-            "tomorrow": old_data.get("tomorrow"),
-        }
+        # Лишаємо останній відомий графік, позначаємо помилку і час її початку
+        new_data = dict(old_data)
+        was_error = old_data.get("status") == "error"
+        new_data["status"] = "error"
+        new_data["error"] = str(e)
+        new_data["error_since"] = (old_data.get("error_since") if was_error else None) or now_str
+        new_data["error_since_ts"] = (old_data.get("error_since_ts") if was_error else None) or int(now.timestamp())
+        new_data.setdefault("updated_at", "невідомо")
 
     if old_data and same_content(old_data, new_data):
-        print("Графік не змінився: data.json не переписуємо")
+        print("Нічого не змінилось: data.json не переписуємо")
         return
 
     with open("data.json", "w", encoding="utf-8") as f:
