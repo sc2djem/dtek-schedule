@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "30.10.2026 21:00",
+  "updated_at": "30.10.2026 21:30",
   "today_date": "30.10.2026",
   "tomorrow": {
     "date": "31.10.2026",
@@ -372,7 +372,7 @@
         "yes",
         "yes",
         "yes",
-        "maybe_first",
+        "yes",
         "yes",
         "yes",
         "maybe_second",
@@ -537,7 +537,7 @@
         "maybe_first",
         "yes",
         "yes",
-        "maybe_second",
+        "yes",
         "yes",
         "yes",
         "yes",
