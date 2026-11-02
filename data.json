@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "02.11.2026 19:30",
+  "updated_at": "02.11.2026 19:45",
   "today_date": "02.11.2026",
   "tomorrow": null,
   "groups": {
@@ -146,7 +146,7 @@
         "yes",
         "yes",
         "yes",
-        "yes"
+        "no"
       ],
       "tomorrow": null
     },
@@ -175,7 +175,7 @@
         "yes",
         "yes",
         "yes",
-        "yes"
+        "no"
       ],
       "tomorrow": null
     },
@@ -233,7 +233,7 @@
         "yes",
         "yes",
         "yes",
-        "yes"
+        "no"
       ],
       "tomorrow": null
     },
@@ -262,7 +262,7 @@
         "no",
         "no",
         "no",
-        "no"
+        "maybe_first"
       ],
       "tomorrow": null
     },
@@ -291,7 +291,7 @@
         "no",
         "no",
         "no",
-        "no"
+        "maybe_first"
       ],
       "tomorrow": null
     },
@@ -349,7 +349,7 @@
         "no",
         "no",
         "no",
-        "no"
+        "yes"
       ],
       "tomorrow": null
     }
