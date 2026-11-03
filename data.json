@@ -406,7 +406,7 @@
     "no",
     "maybe_first"
   ],
-  "error": "ДТЕК показав сторінку захисту від автоматичних запитів (Incapsula)",
+  "error": "HTTPSConnectionPool(host='www.dtek-krem.com.ua', port=443): Read timed out. (read timeout=30)",
   "error_since": "03.11.2026 20:15",
   "error_since_ts": 1793729738
 }
