@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "05.11.2026 20:00",
+  "updated_at": "05.11.2026 21:30",
   "today_date": "05.11.2026",
   "tomorrow": {
     "date": "06.11.2026",
@@ -622,7 +622,7 @@
         "no",
         "no",
         "no",
-        "no",
+        "maybe_first",
         "yes",
         "yes"
       ],
