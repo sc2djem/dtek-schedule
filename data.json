@@ -1,44 +1,41 @@
 {
   "schema": 2,
-  "status": "error",
-  "updated_at": "08.11.2026 10:00",
-  "today_date": "08.11.2026",
+  "status": "ok",
+  "updated_at": "09.11.2026 00:05",
+  "today_date": "09.11.2026",
   "tomorrow": null,
   "groups": {
     "1.1": {
       "today": [
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
+        "no",
         "yes",
-        "maybe_second",
+        "yes",
+        "yes",
+        "yes",
+        "no",
+        "no",
+        "no",
         "no",
         "no",
         "no",
         "maybe_first",
         "yes",
         "yes",
-        "yes",
-        "yes",
-        "yes",
-        "yes",
-        "no",
-        "no",
-        "no",
-        "no",
-        "no",
-        "no",
-        "no",
-        "maybe_first",
-        "yes",
-        "yes",
         "maybe_second",
+        "no",
+        "no",
+        "no",
         "no"
       ],
       "tomorrow": null
     },
     "1.2": {
       "today": [
-        "yes",
-        "maybe_second",
-        "no",
         "no",
         "no",
         "no",
@@ -48,7 +45,7 @@
         "yes",
         "yes",
         "yes",
-        "no",
+        "yes",
         "no",
         "no",
         "no",
@@ -59,25 +56,25 @@
         "yes",
         "yes",
         "maybe_second",
+        "no",
+        "no",
+        "no",
         "no"
       ],
       "tomorrow": null
     },
     "2.1": {
       "today": [
-        "yes",
-        "maybe_second",
         "no",
         "no",
         "no",
-        "no",
-        "no",
-        "no",
-        "no",
+        "maybe_first",
         "yes",
         "yes",
         "yes",
         "yes",
+        "yes",
+        "no",
         "no",
         "no",
         "no",
@@ -88,25 +85,25 @@
         "maybe_first",
         "yes",
         "yes",
-        "maybe_second"
+        "maybe_second",
+        "no",
+        "no",
+        "no"
       ],
       "tomorrow": null
     },
     "2.2": {
       "today": [
-        "yes",
-        "maybe_second",
         "no",
         "no",
         "no",
-        "no",
-        "no",
-        "no",
-        "no",
+        "maybe_first",
         "yes",
         "yes",
         "yes",
         "yes",
+        "yes",
+        "no",
         "no",
         "no",
         "no",
@@ -117,22 +114,23 @@
         "maybe_first",
         "yes",
         "yes",
-        "maybe_second"
+        "maybe_second",
+        "no",
+        "no",
+        "no"
       ],
       "tomorrow": null
     },
     "3.1": {
       "today": [
-        "no",
-        "no",
-        "yes",
         "yes",
         "yes",
         "no",
         "no",
         "no",
         "no",
-        "no",
+        "maybe_first",
+        "yes",
         "no",
         "no",
         "maybe_first",
@@ -145,6 +143,8 @@
         "no",
         "no",
         "no",
+        "no",
+        "yes",
         "yes",
         "yes"
       ],
@@ -152,11 +152,9 @@
     },
     "3.2": {
       "today": [
+        "yes",
+        "yes",
         "no",
-        "no",
-        "yes",
-        "yes",
-        "yes",
         "no",
         "no",
         "no",
@@ -174,6 +172,8 @@
         "no",
         "no",
         "no",
+        "no",
+        "yes",
         "yes",
         "yes"
       ],
@@ -181,13 +181,9 @@
     },
     "4.1": {
       "today": [
-        "no",
-        "no",
         "yes",
         "yes",
         "yes",
-        "no",
-        "no",
         "no",
         "no",
         "no",
@@ -204,19 +200,19 @@
         "no",
         "no",
         "no",
-        "yes"
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "no"
       ],
       "tomorrow": null
     },
     "4.2": {
       "today": [
-        "no",
         "yes",
         "yes",
         "yes",
-        "yes",
-        "no",
-        "no",
         "no",
         "no",
         "no",
@@ -233,15 +229,16 @@
         "no",
         "no",
         "no",
-        "yes"
+        "no",
+        "yes",
+        "yes",
+        "yes",
+        "no"
       ],
       "tomorrow": null
     },
     "5.1": {
       "today": [
-        "no",
-        "no",
-        "yes",
         "yes",
         "yes",
         "yes",
@@ -262,18 +259,18 @@
         "no",
         "no",
         "no",
-        "no"
+        "no",
+        "no",
+        "yes",
+        "yes"
       ],
       "tomorrow": null
     },
     "5.2": {
       "today": [
-        "no",
-        "no",
-        "no",
-        "no",
-        "no",
-        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
         "yes",
         "yes",
         "maybe_second",
@@ -291,7 +288,10 @@
         "no",
         "no",
         "no",
-        "no"
+        "no",
+        "no",
+        "yes",
+        "yes"
       ],
       "tomorrow": null
     },
@@ -299,13 +299,10 @@
       "today": [
         "no",
         "no",
-        "no",
-        "no",
-        "no",
         "maybe_first",
         "yes",
         "yes",
-        "maybe_second",
+        "yes",
         "no",
         "no",
         "no",
@@ -320,7 +317,10 @@
         "no",
         "no",
         "no",
-        "no"
+        "no",
+        "no",
+        "no",
+        "maybe_first"
       ],
       "tomorrow": null
     },
@@ -328,13 +328,10 @@
       "today": [
         "no",
         "no",
-        "no",
-        "no",
-        "no",
         "maybe_first",
         "yes",
         "yes",
-        "maybe_second",
+        "yes",
         "no",
         "no",
         "no",
@@ -349,25 +346,25 @@
         "no",
         "no",
         "no",
-        "no"
+        "no",
+        "no",
+        "no",
+        "maybe_first"
       ],
       "tomorrow": null
     }
   },
   "2.1": [
-    "yes",
-    "maybe_second",
     "no",
     "no",
     "no",
-    "no",
-    "no",
-    "no",
-    "no",
+    "maybe_first",
     "yes",
     "yes",
     "yes",
     "yes",
+    "yes",
+    "no",
     "no",
     "no",
     "no",
@@ -378,22 +375,22 @@
     "maybe_first",
     "yes",
     "yes",
-    "maybe_second"
+    "maybe_second",
+    "no",
+    "no",
+    "no"
   ],
   "2.2": [
-    "yes",
-    "maybe_second",
     "no",
     "no",
     "no",
-    "no",
-    "no",
-    "no",
-    "no",
+    "maybe_first",
     "yes",
     "yes",
     "yes",
     "yes",
+    "yes",
+    "no",
     "no",
     "no",
     "no",
@@ -404,9 +401,9 @@
     "maybe_first",
     "yes",
     "yes",
-    "maybe_second"
-  ],
-  "error": "HTTPSConnectionPool(host='www.dtek-krem.com.ua', port=443): Read timed out. (read timeout=30)",
-  "error_since": "08.11.2026 22:15",
-  "error_since_ts": 1794168924
+    "maybe_second",
+    "no",
+    "no",
+    "no"
+  ]
 }
