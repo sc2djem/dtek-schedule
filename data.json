@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "status": "ok",
+  "status": "error",
   "updated_at": "08.11.2026 10:00",
   "today_date": "08.11.2026",
   "tomorrow": null,
@@ -405,5 +405,8 @@
     "yes",
     "yes",
     "maybe_second"
-  ]
+  ],
+  "error": "HTTPSConnectionPool(host='www.dtek-krem.com.ua', port=443): Read timed out. (read timeout=30)",
+  "error_since": "08.11.2026 22:15",
+  "error_since_ts": 1794168924
 }
