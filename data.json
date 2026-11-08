@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "08.11.2026 06:00",
+  "updated_at": "08.11.2026 10:00",
   "today_date": "08.11.2026",
   "tomorrow": null,
   "groups": {
@@ -77,6 +77,7 @@
         "yes",
         "yes",
         "yes",
+        "yes",
         "no",
         "no",
         "no",
@@ -87,8 +88,7 @@
         "maybe_first",
         "yes",
         "yes",
-        "maybe_second",
-        "no"
+        "maybe_second"
       ],
       "tomorrow": null
     },
@@ -106,6 +106,7 @@
         "yes",
         "yes",
         "yes",
+        "yes",
         "no",
         "no",
         "no",
@@ -116,8 +117,7 @@
         "maybe_first",
         "yes",
         "yes",
-        "maybe_second",
-        "no"
+        "maybe_second"
       ],
       "tomorrow": null
     },
@@ -193,11 +193,11 @@
         "no",
         "no",
         "no",
+        "no",
         "maybe_first",
         "yes",
         "yes",
         "maybe_second",
-        "no",
         "no",
         "no",
         "no",
@@ -222,11 +222,11 @@
         "no",
         "no",
         "no",
+        "no",
         "maybe_first",
         "yes",
         "yes",
         "maybe_second",
-        "no",
         "no",
         "no",
         "no",
@@ -262,7 +262,7 @@
         "no",
         "no",
         "no",
-        "yes"
+        "no"
       ],
       "tomorrow": null
     },
@@ -291,7 +291,7 @@
         "no",
         "no",
         "no",
-        "yes"
+        "no"
       ],
       "tomorrow": null
     },
@@ -313,10 +313,10 @@
         "no",
         "no",
         "no",
-        "yes",
-        "yes",
-        "yes",
         "no",
+        "yes",
+        "yes",
+        "yes",
         "no",
         "no",
         "no",
@@ -342,10 +342,10 @@
         "no",
         "no",
         "no",
-        "yes",
-        "yes",
-        "yes",
         "no",
+        "yes",
+        "yes",
+        "yes",
         "no",
         "no",
         "no",
@@ -367,6 +367,7 @@
     "yes",
     "yes",
     "yes",
+    "yes",
     "no",
     "no",
     "no",
@@ -377,8 +378,7 @@
     "maybe_first",
     "yes",
     "yes",
-    "maybe_second",
-    "no"
+    "maybe_second"
   ],
   "2.2": [
     "yes",
@@ -393,6 +393,7 @@
     "yes",
     "yes",
     "yes",
+    "yes",
     "no",
     "no",
     "no",
@@ -403,7 +404,6 @@
     "maybe_first",
     "yes",
     "yes",
-    "maybe_second",
-    "no"
+    "maybe_second"
   ]
 }
