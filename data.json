@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "10.11.2026 18:30",
+  "updated_at": "10.11.2026 19:00",
   "today_date": "10.11.2026",
   "tomorrow": null,
   "groups": {
@@ -30,7 +30,7 @@
         "no",
         "no",
         "no",
-        "maybe_first"
+        "no"
       ],
       "tomorrow": null
     },
@@ -59,7 +59,7 @@
         "no",
         "no",
         "no",
-        "maybe_first"
+        "no"
       ],
       "tomorrow": null
     },
@@ -88,7 +88,7 @@
         "no",
         "no",
         "no",
-        "maybe_first"
+        "no"
       ],
       "tomorrow": null
     },
@@ -117,7 +117,7 @@
         "no",
         "no",
         "no",
-        "maybe_first"
+        "no"
       ],
       "tomorrow": null
     },
@@ -201,7 +201,7 @@
         "no",
         "maybe_first",
         "yes",
-        "no",
+        "yes",
         "no",
         "no",
         "no"
@@ -317,10 +317,10 @@
         "no",
         "no",
         "no",
+        "no",
         "maybe_first",
         "yes",
-        "yes",
-        "maybe_second"
+        "yes"
       ],
       "tomorrow": null
     },
@@ -378,7 +378,7 @@
     "no",
     "no",
     "no",
-    "maybe_first"
+    "no"
   ],
   "2.2": [
     "no",
@@ -404,6 +404,6 @@
     "no",
     "no",
     "no",
-    "maybe_first"
+    "no"
   ]
 }
