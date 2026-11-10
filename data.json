@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "10.11.2026 00:05",
+  "updated_at": "10.11.2026 06:00",
   "today_date": "10.11.2026",
   "tomorrow": null,
   "groups": {
@@ -96,7 +96,7 @@
       "today": [
         "no",
         "no",
-        "no",
+        "maybe_first",
         "yes",
         "yes",
         "yes",
@@ -156,8 +156,8 @@
         "no",
         "no",
         "no",
-        "no",
-        "no",
+        "yes",
+        "yes",
         "maybe_first",
         "yes",
         "yes",
@@ -213,7 +213,7 @@
         "no",
         "no",
         "no",
-        "no",
+        "yes",
         "yes",
         "yes",
         "yes",
@@ -383,7 +383,7 @@
   "2.2": [
     "no",
     "no",
-    "no",
+    "maybe_first",
     "yes",
     "yes",
     "yes",
