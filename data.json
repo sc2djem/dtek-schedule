@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "status": "ok",
+  "status": "error",
   "updated_at": "12.11.2026 15:30",
   "today_date": "12.11.2026",
   "tomorrow": null,
@@ -405,5 +405,8 @@
     "maybe_second",
     "no",
     "no"
-  ]
+  ],
+  "error": "ДТЕК показав сторінку захисту від автоматичних запитів (Incapsula)",
+  "error_since": "12.11.2026 21:01",
+  "error_since_ts": 1794510066
 }
