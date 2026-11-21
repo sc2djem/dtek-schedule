@@ -1,7 +1,7 @@
 {
   "schema": 2,
-  "status": "error",
-  "updated_at": "21.11.2026 12:30",
+  "status": "ok",
+  "updated_at": "21.11.2026 16:00",
   "today_date": "21.11.2026",
   "tomorrow": null,
   "groups": {
@@ -23,11 +23,11 @@
         "yes",
         "yes",
         "yes",
-        "yes",
-        "yes",
-        "maybe_second",
         "no",
-        "maybe_first",
+        "no",
+        "no",
+        "yes",
+        "yes",
         "yes",
         "yes",
         "yes"
@@ -54,9 +54,9 @@
         "yes",
         "yes",
         "yes",
-        "maybe_second",
-        "no",
-        "maybe_first",
+        "yes",
+        "yes",
+        "yes",
         "yes",
         "yes",
         "yes"
@@ -81,12 +81,12 @@
         "yes",
         "yes",
         "yes",
+        "no",
+        "no",
+        "no",
         "yes",
         "yes",
-        "maybe_second",
-        "no",
-        "no",
-        "no",
+        "yes",
         "yes",
         "yes"
       ],
@@ -113,7 +113,7 @@
         "no",
         "no",
         "no",
-        "no",
+        "yes",
         "yes",
         "yes",
         "yes",
@@ -145,8 +145,8 @@
         "no",
         "no",
         "no",
-        "no",
-        "maybe_first"
+        "maybe_first",
+        "yes"
       ],
       "tomorrow": null
     },
@@ -174,8 +174,8 @@
         "no",
         "no",
         "no",
-        "no",
-        "no"
+        "maybe_first",
+        "yes"
       ],
       "tomorrow": null
     },
@@ -199,12 +199,12 @@
         "yes",
         "yes",
         "yes",
-        "yes",
-        "yes",
+        "maybe_second",
         "no",
         "no",
         "no",
-        "no"
+        "maybe_first",
+        "yes"
       ],
       "tomorrow": null
     },
@@ -230,10 +230,10 @@
         "yes",
         "yes",
         "yes",
-        "no",
-        "no",
-        "no",
-        "no"
+        "yes",
+        "yes",
+        "yes",
+        "yes"
       ],
       "tomorrow": null
     },
@@ -261,8 +261,8 @@
         "yes",
         "yes",
         "yes",
-        "maybe_second",
-        "no"
+        "yes",
+        "yes"
       ],
       "tomorrow": null
     },
@@ -290,8 +290,8 @@
         "yes",
         "yes",
         "yes",
-        "yes",
-        "maybe_second"
+        "no",
+        "no"
       ],
       "tomorrow": null
     },
@@ -319,8 +319,8 @@
         "yes",
         "yes",
         "yes",
-        "yes",
-        "maybe_second"
+        "no",
+        "no"
       ],
       "tomorrow": null
     },
@@ -348,8 +348,8 @@
         "yes",
         "yes",
         "yes",
-        "maybe_first",
-        "maybe_second"
+        "no",
+        "no"
       ],
       "tomorrow": null
     }
@@ -371,12 +371,12 @@
     "yes",
     "yes",
     "yes",
+    "no",
+    "no",
+    "no",
     "yes",
     "yes",
-    "maybe_second",
-    "no",
-    "no",
-    "no",
+    "yes",
     "yes",
     "yes"
   ],
@@ -400,13 +400,10 @@
     "no",
     "no",
     "no",
-    "no",
+    "yes",
     "yes",
     "yes",
     "yes",
     "yes"
-  ],
-  "error": "ДТЕК показав сторінку захисту від автоматичних запитів (Incapsula)",
-  "error_since": "21.11.2026 15:30",
-  "error_since_ts": 1795267849
+  ]
 }
