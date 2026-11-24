@@ -1,7 +1,7 @@
 {
   "schema": 2,
-  "status": "error",
-  "updated_at": "24.11.2026 18:30",
+  "status": "ok",
+  "updated_at": "24.11.2026 20:00",
   "today_date": "24.11.2026",
   "tomorrow": null,
   "groups": {
@@ -56,8 +56,8 @@
         "no",
         "no",
         "no",
-        "no",
         "maybe_first",
+        "yes",
         "yes",
         "yes"
       ],
@@ -115,7 +115,7 @@
         "no",
         "no",
         "no",
-        "no",
+        "maybe_first",
         "yes",
         "yes"
       ],
@@ -316,8 +316,8 @@
         "no",
         "no",
         "no",
-        "no",
-        "maybe_first",
+        "yes",
+        "yes",
         "yes",
         "yes",
         "yes"
@@ -402,11 +402,8 @@
     "no",
     "no",
     "no",
-    "no",
+    "maybe_first",
     "yes",
     "yes"
-  ],
-  "error": "HTTPSConnectionPool(host='www.dtek-krem.com.ua', port=443): Read timed out. (read timeout=30)",
-  "error_since": "24.11.2026 19:00",
-  "error_since_ts": 1795539659
+  ]
 }
