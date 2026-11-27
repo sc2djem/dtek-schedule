@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "status": "ok",
-  "updated_at": "27.11.2026 10:30",
+  "updated_at": "27.11.2026 12:30",
   "today_date": "27.11.2026",
   "tomorrow": null,
   "groups": {
@@ -310,7 +310,7 @@
         "yes",
         "yes",
         "yes",
-        "yes",
+        "no",
         "no",
         "no",
         "no",
